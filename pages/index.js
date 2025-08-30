@@ -9,6 +9,7 @@ import { walletAdapterIdentity } from '@metaplex-foundation/umi-signer-wallet-ad
 import DropzonePreview from '@/components/DropzonePreview';
 
 
+
 export default function Home() {
   const wallet = useWallet();
   const connection = useMemo(() => getConnection(), []);
@@ -51,46 +52,46 @@ export default function Home() {
   }
 }, [selectedFile, name, description]);
 
-  // Mint NFT on Solana
-  const handleMint = useCallback(async () => {
-    try {
-      if (!wallet.connected || !wallet.publicKey) {
-        alert('Connect your wallet first.');
-        return;
-      }
-      if (!selectedFile) {
-        alert('Please select a file to mint.');
-        return;
-      }
-
-      setBusy(true);
-      setStatus('Uploading to IPFS...');
-      const uri = await uploadToIPFS();
-
-      setStatus('Minting on Solana via Metaplex...');
-      const umi = createUmi(connection)
-        .use(mplTokenMetadata())
-        .use(walletAdapterIdentity(wallet));
-
-      const mint = generateSigner(umi);
-
-      await createNft(umi, {
-        mint,
-        authority: umi.identity,
-        name,
-        uri,
-        sellerFeeBasisPoints: percentAmount(Number(royaltiesBps) / 100),
-      }).sendAndConfirm(umi);
-
-      setMintAddress(mint.publicKey.toString()); // ✅ use generated signer key
-      setStatus('✅ Success!');
-    } catch (e) {
-      console.error(e);
-      setStatus(e.message || 'Mint failed');
-    } finally {
-      setBusy(false);
+const handleMint = useCallback(async () => {
+  try {
+    if (!wallet.connected || !wallet.publicKey) {
+      alert('Connect your wallet first.');
+      return;
     }
-  }, [wallet, selectedFile, name, royaltiesBps, connection, uploadToIPFS]);
+    if (!selectedFile) {
+      alert('Please select a file to mint.');
+      return;
+    }
+
+    setBusy(true);
+    setStatus('Uploading to IPFS...');
+    const uri = await uploadToIPFS();
+
+    setStatus('Minting on Solana via Metaplex...');
+    const umi = createUmi(connection)
+      .use(walletAdapterIdentity(wallet))
+      .use(mplTokenMetadata());
+
+    const mint = generateSigner(umi);
+
+    await createNft(umi, {
+      mint,
+      authority: umi.identity,
+      name,
+      uri,
+      sellerFeeBasisPoints: royaltiesBps, // bps directly
+    }).sendAndConfirm(umi);
+
+    setMintAddress(mint.publicKey.toString());
+    setStatus('✅ Success!');
+  } catch (e) {
+    console.error(e);
+    setStatus(e.message || 'Mint failed');
+  } finally {
+    setBusy(false);
+  }
+}, [wallet, selectedFile, name, royaltiesBps, connection, uploadToIPFS]);
+
 
   return (
     <div className="container">

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useMetaplex } from "@/contexts/MetaplexContext";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { sol } from "@metaplex-foundation/js";
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+
 
 function resolveUri(uri) {
   if (!uri) return null;
@@ -18,10 +19,10 @@ export default function MarketplacePage() {
   const { publicKey } = useWallet();
 
   const [listings, setListings] = useState([]);
-  const [bidAmounts, setBidAmounts] = useState({});
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Fetch active listings
   useEffect(() => {
     if (!metaplex || !auctionHouseAddress) return;
 
@@ -36,39 +37,28 @@ export default function MarketplacePage() {
           .auctionHouse()
           .findListings({ auctionHouse, status: "active" });
 
+        // Hydrate all listings + fetch metadata
         const listingsWithNfts = await Promise.all(
           lazyListings.map(async (lazyListing) => {
             try {
+              const fullListing = await metaplex
+                .auctionHouse()
+                .loadListing({ lazyListing });
+
               const nft = await metaplex
                 .nfts()
-                .findByMetadata({ metadata: lazyListing.metadataAddress });
+                .findByMetadata({ metadata: fullListing.metadataAddress });
 
               const metadataRes = await fetch(resolveUri(nft.uri));
               const metadata = await metadataRes.json();
 
-              const bids = await metaplex.auctionHouse().findBids({
-                auctionHouse,
-                mint: nft.mint.address,
-              });
-
-              const highestBid = bids.length
-                ? Math.max(...bids.map((b) => b.price.basisPoints.toNumber() / 1e9))
-                : 0;
-
-              const minAcceptableBid = Math.max(
-                lazyListing.price.basisPoints.toNumber() / 1e9,
-                highestBid
-              );
-
               return {
-                lazyListing,
+                listing: fullListing, // hydrated listing
                 nft,
                 image: metadata.image,
-                highestBid,
-                minAcceptableBid,
               };
             } catch (e) {
-              console.warn("Failed to load NFT for listing", lazyListing, e);
+              console.warn("Failed to load listing", lazyListing, e);
               return null;
             }
           })
@@ -84,50 +74,35 @@ export default function MarketplacePage() {
     fetchListings();
   }, [metaplex, auctionHouseAddress]);
 
-  const handlePlaceBid = async (listing) => {
+  // Handle Buy
+  const handleBuyNow = async (listing) => {
     if (!publicKey) return alert("Connect your wallet first!");
 
-    const bidAmount = parseFloat(
-      bidAmounts[listing.nft.mint.address.toString()]
-    );
-
-    if (!bidAmount || isNaN(bidAmount)) {
-      return alert("Enter a valid bid amount");
-    }
-    if (bidAmount <= listing.minAcceptableBid) {
-      return alert(`Bid must be higher than ${listing.minAcceptableBid} SOL`);
-    }
-
-    setStatus("⏳ Placing bid...");
+    setStatus("⏳ Processing purchase...");
     try {
       const auctionHouse = await metaplex
         .auctionHouse()
         .findByAddress({ address: auctionHouseAddress });
 
-      const builder = await metaplex
-        .auctionHouse()
-        .builders()
-        .bid({
-          auctionHouse,
-          mintAccount: listing.nft.mint.address,
-          price: sol(bidAmount),
-        });
+      const { purchase } = await metaplex.auctionHouse().buy({
+        auctionHouse,
+        listing: listing.listing, // ✅ already hydrated
+      });
 
-      await metaplex.rpc().sendAndConfirmTransaction(builder);
-
-      setStatus(`✅ Bid placed: ${bidAmount} SOL`);
+      setStatus(`✅ Successfully purchased: ${listing.nft.name}`);
+      console.log("Purchase result:", purchase);
     } catch (e) {
-      console.error("Failed to place bid:", e);
+      console.error("Failed to buy:", e);
       setStatus("❌ Failed: " + e.message);
     }
   };
 
   return (
     <div className="container">
-      <h1 className="text-4xl font-extrabold mb-8 text-center">
-        Marketplace
-      </h1>
-
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <h1> Marketplace</h1>
+      <WalletMultiButton />
+      </div>
       {loading ? (
         <p className="text-center text-gray-400 animate-pulse">
           Loading active listings...
@@ -139,43 +114,28 @@ export default function MarketplacePage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {listings.map((listing) => (
-            <div key={listing.nft.mint.address.toString()} className="card flex flex-col items-center p-4">
+            <div
+              key={listing.nft.mint.address.toString()}
+              className="card flex flex-col items-center p-4"
+            >
               <img
                 src={resolveUri(listing.image)}
                 alt={listing.nft.name}
                 className="nft-image"
               />
-              <h3 className="mt-3 font-semibold text-center">{listing.nft.name}</h3>
+              <h3 className="mt-3 font-semibold text-center">
+                {listing.nft.name}
+              </h3>
               <p className="text-gray-400 text-sm mt-1 text-center">
-                Seller’s Min: {listing.lazyListing.price.basisPoints.toNumber() / 1e9} SOL
+                Price:{" "}
+                {listing.listing.price.basisPoints.toNumber() / 1e9} SOL
               </p>
-              <p className="text-gray-400 text-sm text-center">
-                Highest Bid: {listing.highestBid || "—"} SOL
-              </p>
-              <p className="text-gray-200 font-semibold text-center">
-                Min Next Bid: {listing.minAcceptableBid + 0.01} SOL
-              </p>
-
-              <input
-                type="number"
-                step="0.01"
-                min={listing.minAcceptableBid + 0.01}
-                placeholder={`> ${listing.minAcceptableBid} SOL`}
-                value={bidAmounts[listing.nft.mint.address.toString()] || ""}
-                onChange={(e) =>
-                  setBidAmounts({
-                    ...bidAmounts,
-                    [listing.nft.mint.address.toString()]: e.target.value,
-                  })
-                }
-                className="input"
-              />
 
               <button
                 className="button mt-3 w-full"
-                onClick={() => handlePlaceBid(listing)}
+                onClick={() => handleBuyNow(listing)}
               >
-                Place Bid
+                Buy Now
               </button>
             </div>
           ))}

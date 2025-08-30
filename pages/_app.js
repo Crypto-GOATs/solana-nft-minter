@@ -23,27 +23,23 @@ function AppContent({ Component, pageProps }) {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
-          {/* Navbar */}
         <nav className="bg-[#13131f] border-b border-[#1f2033] shadow-md">
-  <div className="container flex flex-wrap items-center justify-between py-4">
-    <div className="flex gap-4">
-      <Link href="/">
-        <button className="button">Mint</button>
-      </Link>
-      <Link href="/my-nfts">
-        <button className="button">My NFTs</button>
-      </Link>
-      <Link href="/marketplace">
-        <button className="button">Marketplace</button>
-      </Link>
-    </div>
-
-    <div>
-      {/* Wallet button can go here */}
-    </div>
-  </div>
-</nav>
-
+          <div className="container flex flex-wrap items-center justify-between py-4">
+            <div className="flex gap-4">
+              <Link href="/">
+                <button className="button">Mint</button>
+              </Link>
+              <Link href="/my-nfts">
+                <button className="button">My NFTs</button>
+              </Link>
+              <Link href="/marketplace">
+                <button className="button">Marketplace</button>
+              </Link>
+            </div>
+            <div>
+            </div>
+          </div>
+        </nav>
           {/* Page content */}
           <MetaplexProvider>   {/* ✅ Wrap here */}
           <Component {...pageProps} />
