@@ -9,20 +9,25 @@
     "lint": "echo \"No linter configured\""
   },
   "dependencies": {
-    "@metaplex-foundation/js": "^0.19.4",
+    "@metaplex-foundation/digital-asset-standard-api": "*",
+    "@metaplex-foundation/mpl-auction-house": "*",
+    "@metaplex-foundation/umi": "*",
+    "@metaplex-foundation/umi-uploader-nft-storage": "*",
     "@solana/wallet-adapter-base": "^0.9.23",
-    "@solana/wallet-adapter-react": "^0.15.35",
-    "@solana/wallet-adapter-react-ui": "^0.9.33",
-    "@solana/wallet-adapter-wallets": "^0.19.18",
-    "@solana/web3.js": "^1.95.3",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "formidable": "*",
-    "next": "^14.0.0",
+    "next": "^15.5.3",
     "nft.storage": "^7.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-dropzone": "^14.2.3"
+    "react-dropzone": "^14.2.3",
+    "@coral-xyz/anchor": "0.31.1",
+  "@solana/web3.js": "^1.87.6",
+  "@solana/wallet-adapter-react": "^0.15.32",
+  "@solana/wallet-adapter-react-ui": "^0.9.35",
+  "@solana/wallet-adapter-wallets": "^0.19.32",
+  "react-icons": "*"
   },
   "devDependencies": {
     "@types/react": "19.1.11"

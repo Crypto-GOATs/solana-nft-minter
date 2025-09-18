@@ -42,33 +42,38 @@ export default async function handler(req, res) {
       );
 
       const fileCid = fileRes.data.IpfsHash;
-      console.log("📁 File pinned:", fileCid);
+console.log("📁 File pinned:", fileCid);
 
-      // 🔹 Build metadata JSON
-      const metadataJson = {
-        ...metadata,
-        image: `ipfs://${fileCid}`,
-        properties: {
-          files: [{ uri: `ipfs://${fileCid}`, type: metadata.type }],
-        },
-      };
+// Use your custom gateway instead of default IPFS URI
+const gatewayUrl = `https://beige-magnetic-sheep-465.mypinata.cloud/ipfs/${fileCid}`;
 
-      // 🔹 Upload metadata to Pinata
-      const jsonRes = await axios.post(
-        "https://api.pinata.cloud/pinning/pinJSONToIPFS",
-        metadataJson,
-        {
-          headers: {
-            pinata_api_key: process.env.PINATA_API_KEY,
-            pinata_secret_api_key: process.env.PINATA_SECRET_API_KEY,
-          },
-        }
-      );
+// Build metadata JSON
+const metadataJson = {
+  ...metadata,
+  image: gatewayUrl, // ✅ updated
+  properties: {
+    files: [{ uri: gatewayUrl, type: metadata.type }], // ✅ updated
+  },
+};
 
-      const metadataCid = jsonRes.data.IpfsHash;
-      console.log("📝 Metadata pinned:", metadataCid);
+// Upload metadata to Pinata
+const jsonRes = await axios.post(
+  "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+  metadataJson,
+  {
+    headers: {
+      pinata_api_key: process.env.PINATA_API_KEY,
+      pinata_secret_api_key: process.env.PINATA_SECRET_API_KEY,
+    },
+  }
+);
 
-      res.status(200).json({ url: `ipfs://${metadataCid}` });
+const metadataCid = jsonRes.data.IpfsHash;
+const metadataUrl = `https://beige-magnetic-sheep-465.mypinata.cloud/ipfs/${metadataCid}`;
+console.log("📝 Metadata pinned:", metadataUrl);
+
+res.status(200).json({ url: metadataUrl });
+
     } catch (e) {
       console.error("❌ Upload error:", e.response?.data || e.message);
       res.status(500).json({ error: e.message });

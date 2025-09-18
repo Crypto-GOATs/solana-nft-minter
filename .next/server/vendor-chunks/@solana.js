@@ -10,7 +10,7 @@ exports.id = "vendor-chunks/@solana";
 exports.ids = ["vendor-chunks/@solana"];
 exports.modules = {
 
-/***/ "./node_modules/@solana/wallet-adapter-react-ui/styles.css":
+/***/ "(pages-dir-node)/./node_modules/@solana/wallet-adapter-react-ui/styles.css":
 /*!*****************************************************************!*\
   !*** ./node_modules/@solana/wallet-adapter-react-ui/styles.css ***!
   \*****************************************************************/

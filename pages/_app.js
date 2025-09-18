@@ -6,7 +6,9 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adap
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import '@solana/wallet-adapter-react-ui/styles.css';
-import { MetaplexProvider } from '@/contexts/MetaplexContext'; // ✅ Import the provider
+import { UmiProvider } from '@/contexts/UmiProvider';
+import { ProgramProvider } from '@/contexts/ProgramProvider';
+import Head from 'next/head'; // Import the Head component
 
 function AppContent({ Component, pageProps }) {
   const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.devnet.solana.com';
@@ -20,6 +22,11 @@ function AppContent({ Component, pageProps }) {
   }, []);
 
   return (
+    <>
+    <Head>
+        <title>OnlyFun</title>
+        <link rel="icon" href="/onlyfun.ico" />
+      </Head>
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
@@ -41,12 +48,15 @@ function AppContent({ Component, pageProps }) {
           </div>
         </nav>
           {/* Page content */}
-          <MetaplexProvider>   {/* ✅ Wrap here */}
+          <UmiProvider>   {/* ✅ Wrap here */}
+            <ProgramProvider>
           <Component {...pageProps} />
-          </MetaplexProvider>   {/* ✅ Wrap here */}
+          </ProgramProvider>
+          </UmiProvider>   {/* ✅ Wrap here */}
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
+    </>
   );
 }
 

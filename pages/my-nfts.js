@@ -1,220 +1,353 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { PublicKey } from "@solana/web3.js";
-import { useMetaplex } from "@/contexts/MetaplexContext";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { sol } from "@metaplex-foundation/js";
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useEffect, useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useProgram } from '@/contexts/ProgramProvider';
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import { mplTokenMetadata, fetchDigitalAsset } from "@metaplex-foundation/mpl-token-metadata";
+import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
+import { publicKey } from '@metaplex-foundation/umi';
+import { getAssociatedTokenAddressSync } from '@solana/spl-token'; // Import this to find the token account
 
+// Helper function to fetch NFT metadata
+const fetchNFTMetadata = async (mintAddress, connection, wallet) => {
+  try {
+    const umi = createUmi(connection)
+      .use(walletAdapterIdentity(wallet))
+      .use(mplTokenMetadata());
 
-export default function MyNfts() {
-  const wallet = useWallet();
-  const { publicKey } = wallet;
-  const { metaplex, auctionHouseAddress } = useMetaplex();
+    const mint = publicKey(mintAddress);
+    const asset = await fetchDigitalAsset(umi, mint);
 
-  const [nfts, setNfts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({});
-  const [listingData, setListingData] = useState({});
+    if (asset.metadata.uri) {
+      const response = await fetch(asset.metadata.uri);
+      const metadata = await response.json();
 
-  function resolveUri(uri) {
-    if (!uri) return null;
-    if (uri.startsWith("ipfs://")) {
-      return `https://gateway.pinata.cloud/ipfs/${uri.replace("ipfs://", "")}`;
+      return {
+        name: asset.metadata.name || metadata.name || 'Unknown NFT',
+        image: metadata.image || null,
+        description: metadata.description || '',
+      };
     }
-    return uri;
+
+    return {
+      name: asset.metadata.name || 'Unknown NFT',
+      image: null,
+      description: '',
+    };
+  } catch (error) {
+    console.error('Error fetching NFT metadata:', error);
+    return {
+      name: 'Unknown NFT',
+      image: null,
+      description: '',
+    };
   }
+};
 
-  // Fetch NFTs and listing info
-  useEffect(() => {
-    if (!publicKey || !metaplex || !auctionHouseAddress) return;
+const NFTCard = ({ nft, onUnlist, isUnlisting }) => {
+  const priceInSOL = nft.account?.price ? (nft.account.price.toNumber() / 1_000_000_000).toFixed(2) : 'N/A';
+  const isSold = nft.account?.closed;
+  
+  return (
+    <div className="card" style={{ padding: '16px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '16px' }}>
+        <div style={{ width: '200px', height: '200px', flexShrink: 0 }}>
+          {nft.metadata?.image ? (
+            <img
+              src={nft.metadata.image}
+              alt={nft.metadata.name}
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'cover', 
+                borderRadius: '8px',
+                filter: isSold ? 'grayscale(50%)' : 'none'
+              }}
+              onError={(e) => e.target.src = '/placeholder-image.svg'}
+            />
+          ) : (
+            <div style={{ 
+              width: '100%', 
+              height: '100%', 
+              backgroundColor: '#f3f4f6', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              borderRadius: '8px',
+              color: '#6b7280'
+            }}>
+              No Image
+            </div>
+          )}
+        </div>
 
-    async function fetchNFTs() {
+        <div style={{ flex: 1 }}>
+          <h3 style={{ margin: '0 0 8px 0' }}>
+            {nft.metadata?.name || 'Unknown NFT'}
+          </h3>
+          
+          {nft.metadata?.description && (
+            <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 12px 0' }}>
+              {nft.metadata.description}
+            </p>
+          )}
+          
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ marginBottom: '4px' }}>
+              <strong>Price:</strong> {priceInSOL} SOL
+            </div>
+            <div style={{ marginBottom: '4px' }}>
+              <strong>Status:</strong>{' '}
+              <span className="tag" style={{ 
+                backgroundColor: isSold ? '#10b981' : '#f59e0b',
+                color: 'white'
+              }}>
+                {isSold ? 'Sold' : 'Listed'}
+              </span>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {!isSold && (
+              <button
+                className="button"
+                onClick={() => onUnlist(nft)}
+                disabled={isUnlisting}
+                style={{ backgroundColor: isUnlisting ? '#6b7280' : '#ef4444' }}
+              >
+                {isUnlisting ? 'Unlisting...' : 'Unlist NFT'}
+              </button>
+            )}
+            
+            {!isSold && (
+              <button
+                className="button"
+                disabled
+                style={{ backgroundColor: '#6b7280' }}
+              >
+                Edit Price (Soon)
+              </button>
+            )}
+
+            {isSold && (
+              <span style={{ 
+                color: '#10b981', 
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                ✅ Successfully Sold!
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function MyNFTs() {
+  const { publicKey: walletPublicKey, connected } = useWallet();
+  const wallet = useWallet();
+  const { program, error: programError } = useProgram();
+  const [nfts, setNFTs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
+  const [unlisting, setUnlisting] = useState(null);
+  const [filter, setFilter] = useState('all');
+
+  const fetchNFTs = async () => {
+    if (!program) return;
+    try {
       setLoading(true);
-      try {
-        const nftList = await metaplex
-          .nfts()
-          .findAllByOwner({ owner: new PublicKey(publicKey) });
-
-        const auctionHouse = await metaplex
-          .auctionHouse()
-          .findByAddress({ address: auctionHouseAddress });
-
-        const loaded = await Promise.all(
-          nftList.map(async (nft) => {
-            try {
-              const fullNft = await metaplex.nfts().load({ metadata: nft });
-              const metadataRes = await fetch(resolveUri(fullNft.uri));
-              const metadata = await metadataRes.json();
-
-              // check if it's already listed
-              const lazyListings = await metaplex.auctionHouse().findListings({
-                auctionHouse,
-                mint: fullNft.mint.address,
-                status: "active",
-              });
-
-              if (lazyListings.length > 0) {
-                try {
-                  const listing = await metaplex
-                    .auctionHouse()
-                    .loadListing({ lazyListing: lazyListings[0] });
-
-                  const bids = await metaplex.auctionHouse().findBids({
-                    auctionHouse,
-                    mint: fullNft.mint.address,
-                  });
-
-                  const highestBid = bids.length
-                    ? Math.max(
-                        ...bids.map(
-                          (b) => b.price.basisPoints.toNumber() / 1e9
-                        )
-                      )
-                    : 0;
-
-                  setListingData((prev) => ({
-                    ...prev,
-                    [fullNft.mint.address.toBase58()]: {
-                      listing,
-                      highestBid,
-                    },
-                  }));
-                } catch (err) {
-                  console.warn("Skipping invalid listing", lazyListings[0], err);
-                }
-              }
-
-              return {
-                mint: fullNft.mint.address.toBase58(),
-                name: metadata.name,
-                description: metadata.description,
-                image: resolveUri(metadata.image),
-              };
-            } catch (err) {
-              console.error("Error loading NFT:", err);
-              return null;
-            }
-          })
-        );
-
-        setNfts(loaded.filter(Boolean));
-      } catch (err) {
-        console.error("Error fetching NFTs:", err);
+      setFetchError(null);
+      
+      if (!program.account?.listing) {
+        setFetchError("Program listing account not found.");
+        return;
       }
+      const allListings = await program.account.listing.all();
+      const myListings = allListings.filter(listing => 
+        listing.account.seller.equals(walletPublicKey)
+      );
+
+      const nftsWithMetadata = await Promise.all(
+        myListings.map(async (listing) => {
+          const metadata = await fetchNFTMetadata(
+            listing.account.mint.toString(),
+            program.provider.connection,
+            wallet
+          );
+          return { ...listing, metadata };
+        })
+      );
+      setNFTs(nftsWithMetadata);
+    } catch (err) {
+      console.error("Error fetching NFTs:", err);
+      setFetchError(err.message || 'An unknown error occurred.');
+    } finally {
       setLoading(false);
     }
+  };
 
-    fetchNFTs();
-  }, [publicKey, metaplex, auctionHouseAddress]);
-
-  async function handleListForSale(nft) {
-    if (!publicKey) return alert("Connect your wallet first!");
-    const { price } = formData[nft.mint] || {};
-    if (!price || isNaN(price) || price <= 0) {
-      return alert("Enter a valid price in SOL");
+  useEffect(() => {
+    if (connected && program) {
+      fetchNFTs();
+    } else {
+      setNFTs([]);
     }
+  }, [program, walletPublicKey, connected, wallet]);
 
+  const handleUnlistNFT = async (listing) => {
+    if (!program || !walletPublicKey) return;
     try {
-      const auctionHouse = await metaplex
-        .auctionHouse()
-        .findByAddress({ address: auctionHouseAddress });
+      setUnlisting(listing.publicKey.toString());
+      
+      const mintAddress = listing.account.mint;
+      const tokenAccount = getAssociatedTokenAddressSync(mintAddress, walletPublicKey);
+      
+      const unlistTransaction = await program.methods.unlistNft()
+        .accounts({
+          listing: listing.publicKey,
+          mint: mintAddress,
+          seller: walletPublicKey,
+          sellerTokenAccount: tokenAccount,
+        })
+        .transaction();
+      
+      const txId = await program.provider.sendAndConfirm(unlistTransaction);
+      console.log('Unlist transaction successful:', txId);
+      
+      await fetchNFTs(); // Refresh the NFT list
+      alert('NFT unlisted successfully!');
 
-      await metaplex.auctionHouse().list({
-        auctionHouse,
-        mintAccount: new PublicKey(nft.mint),
-        price: sol(price),
-      });
-
-      alert(`NFT listed for ${price} SOL.`);
-      window.location.reload();
     } catch (err) {
-      console.error("Error listing NFT:", err);
-      alert("Failed to list NFT.");
+      console.error("Error unlisting NFT:", err);
+      alert(`Failed to unlist NFT: ${err.message}`);
+    } finally {
+      setUnlisting(null);
     }
-  }
+  };
+
+  const filteredNFTs = nfts.filter(nft => {
+    if (filter === 'listed') return !nft.account.closed;
+    if (filter === 'sold') return nft.account.closed;
+    return true;
+  });
+
+  const listedCount = nfts.filter(nft => !nft.account.closed).length;
+  const soldCount = nfts.filter(nft => nft.account.closed).length;
+
+  const renderContent = () => {
+    if (programError) {
+      return <p style={{ color: 'red' }}>Program error: {programError}</p>;
+    }
+    if (!program) {
+      return <p>Loading program...</p>;
+    }
+    if (!connected) {
+      return <p>Please connect your wallet to view your NFTs.</p>;
+    }
+    if (loading) {
+      return <p>Loading your NFTs...</p>;
+    }
+    if (fetchError) {
+      return <p style={{ color: 'red' }}>Error: {fetchError}</p>;
+    }
+    if (filteredNFTs.length === 0 && nfts.length > 0) {
+      return <p>No NFTs match the selected filter.</p>;
+    }
+    if (nfts.length === 0) {
+      return (
+        <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+          <h3>No NFTs Listed</h3>
+          <p>You haven't listed any NFTs for sale yet.</p>
+          <button 
+            className="button"
+            onClick={() => window.location.href = '/'}
+            style={{ marginTop: '16px' }}
+          >
+            Mint & List an NFT
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div>
+        {filteredNFTs.map((nft, index) => (
+          <NFTCard 
+            key={nft.publicKey?.toString() || index}
+            nft={nft} 
+            onUnlist={handleUnlistNFT}
+            isUnlisting={unlisting === nft.publicKey?.toString()}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="container">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-      <h1> My NFTs</h1>
-      <WalletMultiButton />
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+        <h1>My NFTs</h1>
+        <WalletMultiButton />
       </div>
-      {loading && (
-        <p className="text-center text-gray-400 animate-pulse">
-          Loading NFTs...
-        </p>
-      )}
-      {!loading && nfts.length === 0 && (
-        <p className="text-center text-gray-400 text-lg">No NFTs found.</p>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {nfts.map((nft) => {
-          const listing = listingData[nft.mint];
-
-          return (
-            <div key={nft.mint} className="card flex flex-col items-center p-4">
-              {nft.image ? (
-                <img src={nft.image} alt={nft.name} className="nft-image" />
-              ) : (
-                <div className="w-full h-40 bg-gray-800 flex items-center justify-center rounded-lg">
-                  <span className="text-gray-400 text-sm">No Image</span>
-                </div>
-              )}
-              <h3 className="mt-3 font-semibold text-center">{nft.name}</h3>
-              <p className="text-gray-400 text-sm text-center">
-                {nft.description}
-              </p>
-
-              {listing ? (
-                <>
-                  <p className="text-gray-400 mt-2 text-center">
-                    Ask Price:{" "}
-                    {(
-                      listing.listing.price.basisPoints.toNumber() / 1e9
-                    ).toFixed(2)}{" "}
-                    SOL
-                  </p>
-                  <button
-                    className="button mt-3 w-full bg-gray-600 cursor-not-allowed"
-                    disabled
-                  >
-                    Already Listed
-                  </button>
-                </>
-              ) : (
-                <>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    placeholder="Price (SOL)"
-                    className="input mt-2"
-                    value={formData[nft.mint]?.price || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        [nft.mint]: {
-                          ...formData[nft.mint],
-                          price: parseFloat(e.target.value),
-                        },
-                      })
-                    }
-                  />
-                  <button
-                    className="button mt-3 w-full"
-                    onClick={() => handleListForSale(nft)}
-                  >
-                    List for Sale
-                  </button>
-                </>
-              )}
+      
+      <div>
+        {/* Stats */}
+        {nfts.length > 0 && (
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              <span className="tag">Total: {nfts.length}</span>
+              <span className="tag">Listed: {listedCount}</span>
+              <span className="tag">Sold: {soldCount}</span>
             </div>
-          );
-        })}
+            
+            {/* Filter buttons */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <button
+                className="button"
+                onClick={() => setFilter('all')}
+                style={{ 
+                  backgroundColor: filter === 'all' ? '#3b82f6' : '#6b7280',
+                  fontSize: '14px',
+                  padding: '6px 12px'
+                }}
+              >
+                All ({nfts.length})
+              </button>
+              <button
+                className="button"
+                onClick={() => setFilter('listed')}
+                style={{ 
+                  backgroundColor: filter === 'listed' ? '#3b82f6' : '#6b7280',
+                  fontSize: '14px',
+                  padding: '6px 12px'
+                }}
+              >
+                Listed ({listedCount})
+              </button>
+              <button
+                className="button"
+                onClick={() => setFilter('sold')}
+                style={{ 
+                  backgroundColor: filter === 'sold' ? '#3b82f6' : '#6b7280',
+                  fontSize: '14px',
+                  padding: '6px 12px'
+                }}
+              >
+                Sold ({soldCount})
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {renderContent()}
       </div>
+      
+      <p className="footer">Manage your listed NFTs and track your sales.</p>
     </div>
   );
 }
