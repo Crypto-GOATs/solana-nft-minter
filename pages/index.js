@@ -175,15 +175,13 @@ export default function Home() {
   return (
     <div className="container">
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-        <h1>Create and sell your OnlyFun content</h1>
+        <h1>OnlyFun</h1>
         <WalletMultiButton />
       </div>
 
       <div className="card">
         <h2>1. Upload your file</h2>
         <DropzonePreview onFileSelected={setSelectedFile} />
-        <p className="small">Use Devnet while testing — you'll need some SOL.</p>
-
         <hr />
 
         <h2>2. Metadata</h2>
@@ -195,17 +193,6 @@ export default function Home() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My NFT"
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 160 }}>
-            <label>Royalties (bps)</label>
-            <input
-              className="input"
-              type="number"
-              value={royaltiesBps}
-              onChange={(e) => setRoyaltiesBps(Number(e.target.value))}
-              min="0"
-              max="10000"
             />
           </div>
         </div>

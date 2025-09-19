@@ -247,14 +247,14 @@ export default function Marketplace() {
     if (listings.length === 0) {
       return (
         <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-          <h3>No NFTs for Sale</h3>
-          <p>Be the first to list an NFT on this marketplace!</p>
+          <h3>No content for sale</h3>
+          <p>Be the first to list content on this marketplace!</p>
           <button 
             className="button"
             onClick={() => window.location.href = '/'}
             style={{ marginTop: '16px' }}
           >
-            Mint & List an NFT
+            Mint & List your content
           </button>
         </div>
       );
@@ -276,7 +276,7 @@ export default function Marketplace() {
   return (
     <div className="container">
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-        <h1>NFT Marketplace</h1>
+        <h1>OnlyFun Marketplace</h1>
         <WalletMultiButton />
       </div>
       

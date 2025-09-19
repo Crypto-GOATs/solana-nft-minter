@@ -37,10 +37,16 @@ function AppContent({ Component, pageProps }) {
                 <button className="button">Mint</button>
               </Link>
               <Link href="/my-nfts">
-                <button className="button">My NFTs</button>
+                <button className="button">My listings</button>
               </Link>
               <Link href="/marketplace">
                 <button className="button">Marketplace</button>
+              </Link>
+              {/* <Link href="/earnings">
+                <button className="button">Earnings</button>
+              </Link> */}
+              <Link href="/my-content">  
+                <button className="button">My Content</button>
               </Link>
             </div>
             <div>
