@@ -36,7 +36,7 @@ const fetchOwnedNFTs = async (connection, walletPublicKey) => {
 
     return nftMints;
   } catch (error) {
-    console.error('Error fetching owned NFTs:', error);
+    console.error('Error fetching owned Fan NFTs:', error);
     return [];
   }
 };
@@ -52,7 +52,7 @@ const fetchNFTMetadata = async (mintAddress, connection, wallet) => {
     const asset = await fetchDigitalAsset(umi, mint);
 
     let metadata = {
-      name: asset.metadata.name || 'Unknown NFT',
+      name: asset.metadata.name || 'Unknown Fan NFT',
       image: null,
       description: '',
     };
@@ -75,7 +75,7 @@ const fetchNFTMetadata = async (mintAddress, connection, wallet) => {
         if (response.ok) {
           const jsonMetadata = await response.json();
           metadata = {
-            name: asset.metadata.name || jsonMetadata.name || 'Unknown NFT',
+            name: asset.metadata.name || jsonMetadata.name || 'Unknown Fan NFT',
             image: jsonMetadata.image || null,
             description: jsonMetadata.description || '',
           };
@@ -90,9 +90,9 @@ const fetchNFTMetadata = async (mintAddress, connection, wallet) => {
 
     return metadata;
   } catch (error) {
-    console.error('Error fetching NFT metadata for mint:', mintAddress, error);
+    console.error('Error fetching Fan NFT metadata for mint:', mintAddress, error);
     return {
-      name: 'Unknown NFT',
+      name: 'Unknown Fan NFT',
       image: null,
       description: '',
     };
@@ -116,7 +116,7 @@ const ContentCard = ({
   
   // Safety check - if no mint address, don't render this NFT
   if (!nft || !nft.mint) {
-    console.warn('Invalid NFT object:', nft);
+    console.warn('Invalid Fan NFT object:', nft);
     return null;
   }
   
@@ -160,22 +160,22 @@ const ContentCard = ({
               <div style={{ 
                 width: '100%', 
                 height: '100%', 
-                backgroundColor: '#f3f4f6', 
+                backgroundColor: '#f8fafc', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
                 borderRadius: '8px',
-                fontSize: '10px',
-                color: '#6b7280'
+                fontSize: '32px',
+                color: '#9945FF'
               }}>
-                No Image
+                🪭
               </div>
             )}
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {nft.metadata?.name || 'Unknown NFT'}
+              {nft.metadata?.name || 'Premium Fan NFT'}
             </h3>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px' }}>
@@ -183,9 +183,11 @@ const ContentCard = ({
                 {isListed ? `${priceInSOL} SOL` : isSold ? 'Sold' : 'Owned'}
               </span>
               <span className="tag" style={{ 
-                backgroundColor: isSold ? '#10b981' : isListed ? '#f59e0b' : '#6b7280',
+                backgroundColor: isSold ? '#10b981' : isListed ? '#9945FF' : '#14F195',
                 color: 'white',
-                fontSize: '12px'
+                fontSize: '12px',
+                padding: '2px 6px',
+                borderRadius: '4px'
               }}>
                 {isSold ? 'Sold' : isListed ? 'Listed' : 'Owned'}
               </span>
@@ -199,7 +201,9 @@ const ContentCard = ({
                 onClick={() => onList(nft)}
                 disabled={isListing}
                 style={{ 
-                  backgroundColor: isListing ? '#6b7280' : '#10b981',
+                  background: isListing ? '#6b7280' : 'linear-gradient(45deg, #9945FF, #14F195)',
+                  border: 'none',
+                  color: 'white',
                   fontSize: '14px',
                   padding: '6px 12px'
                 }}
@@ -262,7 +266,9 @@ const ContentCard = ({
               onClick={handleEditPrice}
               disabled={isUpdatingPrice}
               style={{ 
-                backgroundColor: '#10b981',
+                background: 'linear-gradient(45deg, #9945FF, #14F195)',
+                border: 'none',
+                color: 'white',
                 fontSize: '14px',
                 padding: '6px 12px'
               }}
@@ -308,21 +314,28 @@ const ContentCard = ({
             <div style={{ 
               width: '100%', 
               height: '100%', 
-              backgroundColor: '#f3f4f6', 
+              backgroundColor: '#f8fafc', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
               borderRadius: '8px',
-              color: '#6b7280'
+              color: '#9945FF',
+              fontSize: '64px'
             }}>
-              No Image
+              🪭
             </div>
           )}
         </div>
 
         <div style={{ flex: 1 }}>
-          <h3 style={{ margin: '0 0 8px 0' }}>
-            {nft.metadata?.name || 'Unknown NFT'}
+          <h3 style={{ 
+            margin: '0 0 8px 0',
+            background: "linear-gradient(45deg, #9945FF, #14F195)", 
+            WebkitBackgroundClip: "text", 
+            WebkitTextFillColor: "transparent",
+            fontWeight: 'bold'
+          }}>
+            {nft.metadata?.name || 'Premium Fan NFT'}
           </h3>
           
           {nft.metadata?.description && (
@@ -335,8 +348,11 @@ const ContentCard = ({
             <div style={{ marginBottom: '4px' }}>
               <strong>Status:</strong>{' '}
               <span className="tag" style={{ 
-                backgroundColor: isSold ? '#10b981' : isListed ? '#f59e0b' : '#6b7280',
-                color: 'white'
+                backgroundColor: isSold ? '#10b981' : isListed ? '#9945FF' : '#14F195',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '12px'
               }}>
                 {isSold ? 'Sold' : isListed ? 'Listed' : 'Owned'}
               </span>
@@ -344,7 +360,14 @@ const ContentCard = ({
             
             {isListed && (
               <div style={{ marginBottom: '4px' }}>
-                <strong>Price:</strong> {priceInSOL} SOL
+                <strong>Price:</strong>{' '}
+                <span style={{ 
+                  color: '#9945FF', 
+                  fontWeight: 'bold',
+                  fontSize: '16px'
+                }}>
+                  {priceInSOL} SOL
+                </span>
               </div>
             )}
           </div>
@@ -370,7 +393,11 @@ const ContentCard = ({
                   className="button"
                   onClick={handleEditPrice}
                   disabled={isUpdatingPrice}
-                  style={{ backgroundColor: '#10b981' }}
+                  style={{ 
+                    background: 'linear-gradient(45deg, #9945FF, #14F195)',
+                    border: 'none',
+                    color: 'white'
+                  }}
                 >
                   {isUpdatingPrice ? 'Updating...' : 'Update'}
                 </button>
@@ -391,9 +418,13 @@ const ContentCard = ({
                 className="button"
                 onClick={() => onList(nft)}
                 disabled={isListing}
-                style={{ backgroundColor: isListing ? '#6b7280' : '#10b981' }}
+                style={{ 
+                  background: isListing ? '#6b7280' : 'linear-gradient(45deg, #9945FF, #14F195)',
+                  border: 'none',
+                  color: 'white'
+                }}
               >
-                {isListing ? 'Listing...' : 'List for Sale'}
+                {isListing ? 'Listing Fan...' : 'List Fan for Sale'}
               </button>
             )}
             
@@ -412,7 +443,7 @@ const ContentCard = ({
                   disabled={isUnlisting}
                   style={{ backgroundColor: isUnlisting ? '#6b7280' : '#ef4444' }}
                 >
-                  {isUnlisting ? 'Unlisting...' : 'Unlist NFT'}
+                  {isUnlisting ? 'Unlisting Fan...' : 'Unlist Fan NFT'}
                 </button>
               </>
             )}
@@ -424,7 +455,7 @@ const ContentCard = ({
                 display: 'flex',
                 alignItems: 'center'
               }}>
-                ✅ Successfully Sold!
+                ✅ Fan Successfully Sold!
               </span>
             )}
           </div>
@@ -466,10 +497,17 @@ const ListForSaleModal = ({ isOpen, onClose, onConfirm, nft, isListing }) => {
         maxWidth: '500px', 
         padding: '24px' 
       }}>
-        <h2 style={{ marginTop: 0 }}>List NFT for Sale</h2>
+        <h2 style={{ 
+          marginTop: 0,
+          background: "linear-gradient(45deg, #9945FF, #14F195)", 
+          WebkitBackgroundClip: "text", 
+          WebkitTextFillColor: "transparent"
+        }}>
+          List Fan NFT for Sale
+        </h2>
         
         <div style={{ marginBottom: '16px', textAlign: 'center' }}>
-          {nft.metadata?.image && (
+          {nft.metadata?.image ? (
             <img
               src={nft.metadata.image}
               alt={nft.metadata.name}
@@ -481,8 +519,23 @@ const ListForSaleModal = ({ isOpen, onClose, onConfirm, nft, isListing }) => {
                 marginBottom: '8px'
               }}
             />
+          ) : (
+            <div style={{ 
+              width: '120px', 
+              height: '120px', 
+              backgroundColor: '#f8fafc',
+              margin: '0 auto 8px auto',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              borderRadius: '8px',
+              color: '#9945FF',
+              fontSize: '48px'
+            }}>
+              🪭
+            </div>
           )}
-          <h3 style={{ margin: '8px 0' }}>{nft.metadata?.name || 'Unknown NFT'}</h3>
+          <h3 style={{ margin: '8px 0' }}>{nft.metadata?.name || 'Premium Fan NFT'}</h3>
         </div>
         
         <div style={{ marginBottom: '16px' }}>
@@ -510,9 +563,13 @@ const ListForSaleModal = ({ isOpen, onClose, onConfirm, nft, isListing }) => {
             className="button"
             onClick={handleConfirm}
             disabled={isListing}
-            style={{ backgroundColor: '#10b981' }}
+            style={{ 
+              background: isListing ? '#6b7280' : 'linear-gradient(45deg, #9945FF, #14F195)',
+              border: 'none',
+              color: 'white'
+            }}
           >
-            {isListing ? 'Listing...' : 'List NFT'}
+            {isListing ? 'Listing Fan...' : 'List Fan NFT'}
           </button>
         </div>
       </div>
@@ -521,8 +578,7 @@ const ListForSaleModal = ({ isOpen, onClose, onConfirm, nft, isListing }) => {
 };
 
 export default function MyContent() {
-  const { publicKey: walletPublicKey, connected } = useWallet();
-  const wallet = useWallet();
+  const { publicKey: walletPublicKey, connected, wallet } = useWallet();
   const { program, error: programError } = useProgram();
   const [nfts, setNFTs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -543,7 +599,7 @@ export default function MyContent() {
       
       // Get all NFTs owned by the user
       const ownedNFTs = await fetchOwnedNFTs(program.provider.connection, walletPublicKey);
-      console.log(`Found ${ownedNFTs.length} owned NFTs`);
+      console.log(`Found ${ownedNFTs.length} owned Fan NFTs`);
       
       // Get all listings to check which NFTs are listed/sold
       let allListings = [];
@@ -583,12 +639,12 @@ export default function MyContent() {
               })
             };
           } catch (error) {
-            console.error('Error processing NFT:', nft.mint.toString(), error);
+            console.error('Error processing Fan NFT:', nft.mint.toString(), error);
             // Return basic NFT info even if metadata fails
             return {
               mint: nft.mint,
               tokenAccount: nft.tokenAccount,
-              metadata: { name: 'Unknown NFT', image: null, description: 'Failed to load metadata' }
+              metadata: { name: 'Unknown Fan NFT', image: null, description: 'Failed to load metadata' }
             };
           }
         })
@@ -603,13 +659,13 @@ export default function MyContent() {
       const failedCount = nftsWithMetadata.filter(result => result.status === 'rejected').length;
       
       if (failedCount > 0) {
-        console.warn(`Failed to process ${failedCount} NFTs`);
+        console.warn(`Failed to process ${failedCount} Fan NFTs`);
       }
       
-      console.log(`Processed ${validNFTs.length} valid NFTs out of ${ownedNFTs.length} total`);
+      console.log(`Processed ${validNFTs.length} valid Fan NFTs out of ${ownedNFTs.length} total`);
       setNFTs(validNFTs);
     } catch (err) {
-      console.error("Error fetching NFTs:", err);
+      console.error("Error fetching Fan NFTs:", err);
       setFetchError(err.message || 'An unknown error occurred.');
     } finally {
       setLoading(false);
@@ -632,7 +688,7 @@ export default function MyContent() {
       const mintAddress = nft.mint;
       
       if (!mintAddress) {
-        alert('Cannot find mint address for this NFT');
+        alert('Cannot find mint address for this Fan NFT');
         return;
       }
       
@@ -670,13 +726,13 @@ export default function MyContent() {
       
       console.log('List transaction successful:', tx);
       await fetchNFTs();
-      alert('NFT listed successfully!');
+      alert('Fan NFT listed successfully!');
       setShowListModal(false);
       setSelectedNFT(null);
 
     } catch (err) {
-      console.error("Error listing NFT:", err);
-      alert(`Failed to list NFT: ${err.message}`);
+      console.error("Error listing Fan NFT:", err);
+      alert(`Failed to list Fan NFT: ${err.message}`);
     } finally {
       setListing(null);
     }
@@ -690,7 +746,7 @@ export default function MyContent() {
       const mintAddress = listing.account?.mint;
       
       if (!mintAddress) {
-        alert('Cannot find mint address for this NFT');
+        alert('Cannot find mint address for this Fan NFT');
         return;
       }
       
@@ -709,11 +765,11 @@ export default function MyContent() {
       console.log('Unlist transaction successful:', txId);
       
       await fetchNFTs();
-      alert('NFT unlisted successfully!');
+      alert('Fan NFT unlisted successfully!');
 
     } catch (err) {
-      console.error("Error unlisting NFT:", err);
-      alert(`Failed to unlist NFT: ${err.message}`);
+      console.error("Error unlisting Fan NFT:", err);
+      alert(`Failed to unlist Fan NFT: ${err.message}`);
     } finally {
       setUnlisting(null);
     }
@@ -751,59 +807,92 @@ export default function MyContent() {
       return <p style={{ color: 'red' }}>Program error: {programError}</p>;
     }
     if (!program) {
-      return <p>Loading program...</p>;
+      return <p>Loading OnlyFans program...</p>;
     }
     if (!connected) {
       return (
         <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-          <Package size={48} style={{ color: '#6b7280', marginBottom: '16px' }} />
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🪭</div>
           <h3>Connect Your Wallet</h3>
-          <p>Please connect your wallet to view your content.</p>
+          <p>Please connect your wallet to view your fan collection.</p>
         </div>
       );
     }
     if (loading) {
-      return <p>Loading your content...</p>;
-    }
-    if (fetchError) {
-      return <p style={{ color: 'red' }}>Error: {fetchError}</p>;
-    }
-    if (filteredNFTs.length === 0 && nfts.length > 0) {
       return (
-        <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-          <h3>No Content Matches Filter</h3>
-          <p>Try selecting a different filter to see your content.</p>
+        <div className="card" style={{ padding: '20px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ 
+              width: '20px',
+              height: '20px',
+              border: '2px solid #e2e8f0',
+              borderTop: '2px solid #9945FF',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+            <div>
+              <p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>
+                Fetching your Fan NFTs...
+              </p>
+              <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                This may take a moment depending on network congestion.
+              </p>
+            </div>
+          </div>
         </div>
       );
     }
-    if (nfts.length === 0) {
+    if (fetchError) {
       return (
-        <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-          <Package size={48} style={{ color: '#6b7280', marginBottom: '16px' }} />
-          <h3>No Content Yet</h3>
-          <p>You haven't created any NFTs yet. Start by minting your first piece of content!</p>
-          <button 
-            className="button"
-            onClick={() => window.location.href = '/'}
-            style={{ marginTop: '16px', backgroundColor: '#10b981' }}
-          >
-            Create Your First NFT
+        <div className="card" style={{ padding: '20px', marginBottom: '20px' }}>
+          <p style={{ color: 'red' }}>Error fetching NFTs: {fetchError}</p>
+          <button className="button" onClick={fetchNFTs}>
+            Try Again
           </button>
         </div>
       );
     }
+    if (filteredNFTs.length === 0) {
+      return (
+        <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>
+            {filter === 'all' && '👀'}
+            {filter === 'owned' && '📦'}
+            {filter === 'listed' && '💰'}
+            {filter === 'sold' && '✅'}
+          </div>
+          <h3 style={{ margin: 0 }}>
+            No Fan NFTs {
+              filter === 'all' ? 'found' :
+              filter === 'owned' ? 'in your wallet' :
+              filter === 'listed' ? 'listed for sale' :
+              'sold'
+            }.
+          </h3>
+          {filter === 'all' && (
+            <p style={{ color: '#6b7280' }}>
+              Looks like your collection is empty.
+            </p>
+          )}
+        </div>
+      );
+    }
     return (
-      <div>
-        {filteredNFTs.map((nft, index) => (
-          <ContentCard 
-            key={nft.mint?.toString() || index}
-            nft={nft} 
-            onList={openListModal}
+      <div style={{ 
+        display: view === 'grid' ? 'grid' : 'block',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: '24px'
+      }}>
+        {filteredNFTs.map(nft => (
+          <ContentCard
+            key={nft.mint.toString()}
+            nft={nft}
+            onList={() => openListModal(nft)}
             onUnlist={handleUnlistNFT}
             onEditPrice={handleEditPrice}
-            isListing={listing === nft.mint?.toString()}
-            isUnlisting={unlisting === nft.publicKey?.toString()}
-            isUpdatingPrice={updatingPrice === nft.publicKey?.toString()}
+            isListing={listing === nft.mint.toString()}
+            isUnlisting={unlisting === (nft.publicKey?.toString() || '')}
+            isUpdatingPrice={updatingPrice === nft.mint.toString()}
             view={view}
           />
         ))}
@@ -812,145 +901,136 @@ export default function MyContent() {
   };
 
   return (
-    <div className="container">
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-        <h1>My Content</h1>
+    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+      <header style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ 
+          background: "linear-gradient(45deg, #9945FF, #14F195)", 
+          WebkitBackgroundClip: "text", 
+          WebkitTextFillColor: "transparent",
+          margin: 0,
+          fontSize: '32px'
+        }}>
+          My Fan NFTs
+        </h1>
         <WalletMultiButton />
+      </header>
+
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+        <button
+          onClick={() => setFilter('all')}
+          className="button"
+          style={{ backgroundColor: filter === 'all' ? '#9945FF' : '#4b5563' }}
+        >
+          All ({nfts.length})
+        </button>
+        <button
+          onClick={() => setFilter('owned')}
+          className="button"
+          style={{ backgroundColor: filter === 'owned' ? '#9945FF' : '#4b5563' }}
+        >
+          Owned ({ownedCount})
+        </button>
+        <button
+          onClick={() => setFilter('listed')}
+          className="button"
+          style={{ backgroundColor: filter === 'listed' ? '#9945FF' : '#4b5563' }}
+        >
+          Listed ({listedCount})
+        </button>
+        <button
+          onClick={() => setFilter('sold')}
+          className="button"
+          style={{ backgroundColor: filter === 'sold' ? '#9945FF' : '#4b5563' }}
+        >
+          Sold ({soldCount})
+        </button>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+          <button
+            onClick={() => setView('grid')}
+            className="icon-button"
+            disabled={view === 'grid'}
+          >
+            <Grid color={view === 'grid' ? '#9945FF' : '#6b7280'} size={20} />
+          </button>
+          <button
+            onClick={() => setView('list')}
+            className="icon-button"
+            disabled={view === 'list'}
+          >
+            <List color={view === 'list' ? '#9945FF' : '#6b7280'} size={20} />
+          </button>
+        </div>
       </div>
       
-      <div>
-        {/* Statistics */}
-        {nfts.length > 0 && (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
-            gap: '12px', 
-            marginBottom: '20px' 
-          }}>
-            <div className="card" style={{ padding: '16px', textAlign: 'center' }}>
-              <Package size={20} style={{ color: '#6b7280', marginBottom: '4px' }} />
-              <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{nfts.length}</div>
-              <div style={{ fontSize: '12px', color: '#6b7280' }}>Total</div>
-            </div>
-            <div className="card" style={{ padding: '16px', textAlign: 'center' }}>
-              <Eye size={20} style={{ color: '#6b7280', marginBottom: '4px' }} />
-              <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{ownedCount}</div>
-              <div style={{ fontSize: '12px', color: '#6b7280' }}>Owned</div>
-            </div>
-            <div className="card" style={{ padding: '16px', textAlign: 'center' }}>
-              <Tag size={20} style={{ color: '#f59e0b', marginBottom: '4px' }} />
-              <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{listedCount}</div>
-              <div style={{ fontSize: '12px', color: '#6b7280' }}>Listed</div>
-            </div>
-            <div className="card" style={{ padding: '16px', textAlign: 'center' }}>
-              <TrendingUp size={20} style={{ color: '#10b981', marginBottom: '4px' }} />
-              <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{soldCount}</div>
-              <div style={{ fontSize: '12px', color: '#6b7280' }}>Sold</div>
-            </div>
-          </div>
-        )}
-        
-        {/* Controls */}
-        {nfts.length > 0 && (
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            marginBottom: '20px',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <button
-                className="button"
-                onClick={() => setFilter('all')}
-                style={{ 
-                  backgroundColor: filter === 'all' ? '#3b82f6' : '#6b7280',
-                  fontSize: '14px',
-                  padding: '6px 12px'
-                }}
-              >
-                All ({nfts.length})
-              </button>
-              <button
-                className="button"
-                onClick={() => setFilter('owned')}
-                style={{ 
-                  backgroundColor: filter === 'owned' ? '#3b82f6' : '#6b7280',
-                  fontSize: '14px',
-                  padding: '6px 12px'
-                }}
-              >
-                Owned ({ownedCount})
-              </button>
-              <button
-                className="button"
-                onClick={() => setFilter('listed')}
-                style={{ 
-                  backgroundColor: filter === 'listed' ? '#3b82f6' : '#6b7280',
-                  fontSize: '14px',
-                  padding: '6px 12px'
-                }}
-              >
-                Listed ({listedCount})
-              </button>
-              <button
-                className="button"
-                onClick={() => setFilter('sold')}
-                style={{ 
-                  backgroundColor: filter === 'sold' ? '#3b82f6' : '#6b7280',
-                  fontSize: '14px',
-                  padding: '6px 12px'
-                }}
-              >
-                Sold ({soldCount})
-              </button>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                className="button"
-                onClick={() => setView('grid')}
-                style={{ 
-                  backgroundColor: view === 'grid' ? '#3b82f6' : '#6b7280',
-                  fontSize: '14px',
-                  padding: '6px 12px'
-                }}
-              >
-                <Grid size={16} style={{ marginRight: '4px' }} />
-                Grid
-              </button>
-              <button
-                className="button"
-                onClick={() => setView('list')}
-                style={{ 
-                  backgroundColor: view === 'list' ? '#3b82f6' : '#6b7280',
-                  fontSize: '14px',
-                  padding: '6px 12px'
-                }}
-              >
-                <List size={16} style={{ marginRight: '4px' }} />
-                List
-              </button>
-            </div>
-          </div>
-        )}
-        
-        {renderContent()}
-      </div>
-      
+      {renderContent()}
+
       <ListForSaleModal
         isOpen={showListModal}
-        onClose={() => {
-          setShowListModal(false);
-          setSelectedNFT(null);
-        }}
+        onClose={() => setShowListModal(false)}
         onConfirm={handleListNFT}
         nft={selectedNFT}
-        isListing={listing === selectedNFT?.publicKey?.toString()}
+        isListing={listing === (selectedNFT?.mint?.toString() || 'listing')}
       />
-      
-      <p className="footer">Manage your NFT content, list items for sale, and track your creative portfolio.</p>
+
+      <style jsx>{`
+        .card {
+          background-color: #ffffff;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          border: 1px solid #e2e8f0;
+        }
+
+        .button {
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-weight: 600;
+          color: white;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          border: none;
+        }
+
+        .button:disabled {
+          background-color: #6b7280 !important;
+          cursor: not-allowed;
+        }
+
+        .input {
+          padding: 10px;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          width: 100%;
+          transition: border-color 0.2s;
+        }
+
+        .input:focus {
+          outline: none;
+          border-color: #9945FF;
+        }
+
+        .icon-button {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 8px;
+          border-radius: 8px;
+          transition: background-color 0.2s;
+        }
+
+        .icon-button:hover {
+          background-color: #f3f4f6;
+        }
+
+        .icon-button:disabled {
+          cursor: default;
+          background-color: transparent;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -27,21 +27,21 @@ const fetchNFTMetadata = async (mintAddress, connection, wallet) => {
       const metadata = await response.json();
 
       return {
-        name: asset.metadata.name || metadata.name || 'Unknown NFT',
+        name: asset.metadata.name || metadata.name || 'Unknown Fan NFT',
         image: metadata.image || null,
         description: metadata.description || '',
       };
     }
 
     return {
-      name: asset.metadata.name || 'Unknown NFT',
+      name: asset.metadata.name || 'Unknown Fan NFT',
       image: null,
       description: '',
     };
   } catch (error) {
     console.error('Error fetching NFT metadata:', error);
     return {
-      name: 'Unknown NFT',
+      name: 'Unknown Fan NFT',
       image: null,
       description: '',
     };
@@ -78,16 +78,17 @@ const NFTCard = ({ nft, onUnlist, isUnlisting }) => {
               alignItems: 'center', 
               justifyContent: 'center',
               borderRadius: '8px',
-              color: '#6b7280'
+              color: '#6b7280',
+              fontSize: '48px'
             }}>
-              No Image
+              🪭
             </div>
           )}
         </div>
 
         <div style={{ flex: 1 }}>
           <h3 style={{ margin: '0 0 8px 0' }}>
-            {nft.metadata?.name || 'Unknown NFT'}
+            {nft.metadata?.name || 'Unknown Fan NFT'}
           </h3>
           
           {nft.metadata?.description && (
@@ -103,8 +104,11 @@ const NFTCard = ({ nft, onUnlist, isUnlisting }) => {
             <div style={{ marginBottom: '4px' }}>
               <strong>Status:</strong>{' '}
               <span className="tag" style={{ 
-                backgroundColor: isSold ? '#10b981' : '#f59e0b',
-                color: 'white'
+                backgroundColor: isSold ? '#10b981' : '#9945FF',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '12px'
               }}>
                 {isSold ? 'Sold' : 'Listed'}
               </span>
@@ -119,7 +123,7 @@ const NFTCard = ({ nft, onUnlist, isUnlisting }) => {
                 disabled={isUnlisting}
                 style={{ backgroundColor: isUnlisting ? '#6b7280' : '#ef4444' }}
               >
-                {isUnlisting ? 'Unlisting...' : 'Unlist NFT'}
+                {isUnlisting ? 'Unlisting...' : 'Unlist Fan NFT'}
               </button>
             )}
             
@@ -140,7 +144,7 @@ const NFTCard = ({ nft, onUnlist, isUnlisting }) => {
                 display: 'flex',
                 alignItems: 'center'
               }}>
-                ✅ Successfully Sold!
+                ✅ Fan Successfully Sold!
               </span>
             )}
           </div>
@@ -187,7 +191,7 @@ export default function MyNFTs() {
       );
       setNFTs(nftsWithMetadata);
     } catch (err) {
-      console.error("Error fetching NFTs:", err);
+      console.error("Error fetching Fan NFTs:", err);
       setFetchError(err.message || 'An unknown error occurred.');
     } finally {
       setLoading(false);
@@ -223,11 +227,11 @@ export default function MyNFTs() {
       console.log('Unlist transaction successful:', txId);
       
       await fetchNFTs(); // Refresh the NFT list
-      alert('NFT unlisted successfully!');
+      alert('Fan NFT unlisted successfully!');
 
     } catch (err) {
-      console.error("Error unlisting NFT:", err);
-      alert(`Failed to unlist NFT: ${err.message}`);
+      console.error("Error unlisting Fan NFT:", err);
+      alert(`Failed to unlist Fan NFT: ${err.message}`);
     } finally {
       setUnlisting(null);
     }
@@ -296,7 +300,7 @@ export default function MyNFTs() {
       return (
         <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
           <h3>Connect Your Wallet</h3>
-          <p>Please connect your wallet to view your NFTs.</p>
+          <p>Please connect your wallet to view your Fan NFTs.</p>
         </div>
       );
     }
@@ -306,12 +310,12 @@ export default function MyNFTs() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <RefreshCw size={20} style={{ 
               animation: 'spin 1s linear infinite',
-              color: '#3b82f6'
+              color: '#9945FF'
             }} />
             <div>
-              <div style={{ fontWeight: 'bold' }}>Loading your NFTs...</div>
+              <div style={{ fontWeight: 'bold' }}>Loading your Fan NFTs...</div>
               <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                Fetching listing and sales data from the platform.
+                Fetching listing and sales data from OnlyFans marketplace.
               </div>
             </div>
           </div>
@@ -328,19 +332,25 @@ export default function MyNFTs() {
       return <p style={{ color: 'red' }}>Error: {fetchError}</p>;
     }
     if (filteredNFTs.length === 0 && nfts.length > 0) {
-      return <p>No NFTs match the selected filter.</p>;
+      return <p>No Fan NFTs match the selected filter.</p>;
     }
     if (nfts.length === 0) {
       return (
         <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-          <h3>No NFTs Listed</h3>
-          <p>You haven't listed any NFTs for sale yet.</p>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🪭</div>
+          <h3>No Fan NFTs Listed</h3>
+          <p>You haven't listed any electric fan NFTs for sale yet.</p>
           <button 
             className="button"
             onClick={() => window.location.href = '/'}
-            style={{ marginTop: '16px' }}
+            style={{ 
+              marginTop: '16px',
+              background: 'linear-gradient(45deg, #9945FF, #14F195)',
+              border: 'none',
+              color: 'white'
+            }}
           >
-            Mint & List an NFT
+            Mint & List a Fan NFT
           </button>
         </div>
       );
@@ -361,12 +371,130 @@ export default function MyNFTs() {
 
   return (
     <div className="container">
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-        <h1>My listings</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {/* Animated OnlyFans Logo */}
+          <div style={{ width: "70px", height: "47px", flexShrink: 0 }}>
+            <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+              <defs>
+                <linearGradient id="fanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor:"#9945FF", stopOpacity:1}} />
+                  <stop offset="50%" style={{stopColor:"#14F195", stopOpacity:1}} />
+                  <stop offset="100%" style={{stopColor:"#9945FF", stopOpacity:1}} />
+                </linearGradient>
+                
+                <linearGradient id="solanaGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style={{stopColor:"#9945FF", stopOpacity:1}} />
+                  <stop offset="100%" style={{stopColor:"#14F195", stopOpacity:1}} />
+                </linearGradient>
+                
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              
+              {/* Fan background */}
+              <circle cx="150" cy="80" r="45" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" opacity="0.8"/>
+              
+              {/* Spinning fan blades */}
+              <g filter="url(#glow)">
+                <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transformOrigin="150 80">
+                  <animateTransform attributeName="transform" attributeType="XML"
+                                    type="rotate" from="0 150 80" to="360 150 80"
+                                    dur="1.5s" repeatCount="indefinite"/>
+                </ellipse>
+                
+                <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transform="rotate(120 150 80)" transformOrigin="150 80">
+                  <animateTransform attributeName="transform" attributeType="XML"
+                                    type="rotate" from="120 150 80" to="480 150 80"
+                                    dur="1.5s" repeatCount="indefinite"/>
+                </ellipse>
+                
+                <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transform="rotate(240 150 80)" transformOrigin="150 80">
+                  <animateTransform attributeName="transform" attributeType="XML"
+                                    type="rotate" from="240 150 80" to="600 150 80"
+                                    dur="1.5s" repeatCount="indefinite"/>
+                </ellipse>
+              </g>
+              
+              {/* Fan center */}
+              <circle cx="150" cy="80" r="8" fill="#1e293b"/>
+              <circle cx="150" cy="80" r="4" fill="url(#solanaGradient)"/>
+              
+              {/* Fan stand */}
+              <rect x="147" y="115" width="6" height="25" fill="#475569" rx="3"/>
+              <ellipse cx="150" cy="145" rx="20" ry="5" fill="#64748b"/>
+              
+              {/* Logo text */}
+              <text x="150" y="170" fontFamily="Arial, sans-serif" fontSize="28" fontWeight="bold" 
+                    textAnchor="middle" fill="url(#solanaGradient)">
+                OnlyFans
+              </text>
+              
+              <text x="150" y="190" fontFamily="Arial, sans-serif" fontSize="10" 
+                    textAnchor="middle" fill="#64748b" fontStyle="italic">
+                Premium Electric Fan NFTs
+              </text>
+              
+              {/* Wind effect lines */}
+              <g opacity="0.4">
+                <path d="M 200 60 Q 220 65 240 60" stroke="#14F195" strokeWidth="2" fill="none" strokeLinecap="round">
+                  <animate attributeName="opacity" values="0.4;0.8;0.4" dur="1.5s" repeatCount="indefinite"/>
+                </path>
+                <path d="M 205 75 Q 230 78 250 75" stroke="#14F195" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                  <animate attributeName="opacity" values="0.3;0.7;0.3" dur="1.7s" repeatCount="indefinite"/>
+                </path>
+                <path d="M 200 90 Q 225 95 245 90" stroke="#14F195" strokeWidth="1" fill="none" strokeLinecap="round">
+                  <animate attributeName="opacity" values="0.2;0.6;0.2" dur="1.9s" repeatCount="indefinite"/>
+                </path>
+              </g>
+              
+              {/* NFT badge */}
+              <rect x="10" y="10" width="30" height="15" rx="7" fill="#1e293b" opacity="0.9"/>
+              <text x="25" y="21" fontFamily="Arial, sans-serif" fontSize="8" fontWeight="bold" 
+                    textAnchor="middle" fill="#14F195">NFT</text>
+            </svg>
+          </div>
+          
+          {/* Title with gradient text */}
+          <div>
+            <h1 style={{ 
+              margin: 0, 
+              fontSize: "32px", 
+              background: "linear-gradient(45deg, #9945FF, #14F195)", 
+              WebkitBackgroundClip: "text", 
+              WebkitTextFillColor: "transparent",
+              fontWeight: 'bold'
+            }}>
+              My Fan Collection
+            </h1>
+            <p style={{ 
+              margin: 0, 
+              fontSize: "14px", 
+              color: "#64748b", 
+              fontStyle: "italic" 
+            }}>
+              Manage Your Electric Fan NFT Portfolio
+            </p>
+          </div>
+        </div>
         <WalletMultiButton />
       </div>
       
-      <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>My Earnings</h2>
+      <h2 style={{ 
+        fontSize: '24px', 
+        fontWeight: 'bold', 
+        marginBottom: '16px',
+        background: "linear-gradient(45deg, #9945FF, #14F195)", 
+        WebkitBackgroundClip: "text", 
+        WebkitTextFillColor: "transparent"
+      }}>
+        Fan Sales Analytics
+      </h2>
       
       {connected && nfts.length > 0 && (
         <>
@@ -377,31 +505,40 @@ export default function MyNFTs() {
             marginBottom: '24px' 
           }}>
             <div className="card" style={{ padding: '20px', textAlign: 'center' }}>
-              <DollarSign size={24} style={{ color: '#10b981', marginBottom: '8px' }} />
-              <h3 style={{ margin: '0 0 4px 0', color: '#10b981' }}>
+              <DollarSign size={24} style={{ color: '#14F195', marginBottom: '8px' }} />
+              <h3 style={{ margin: '0 0 4px 0', color: '#14F195' }}>
                 {totalEarnings.toFixed(3)} SOL
               </h3>
-              <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Total Earnings</p>
+              <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Total Fan Earnings</p>
             </div>
             <div className="card" style={{ padding: '20px', textAlign: 'center' }}>
-              <Activity size={24} style={{ color: '#8b5cf6', marginBottom: '8px' }} />
-              <h3 style={{ margin: '0 0 4px 0', color: '#8b5cf6' }}>
+              <Activity size={24} style={{ color: '#9945FF', marginBottom: '8px' }} />
+              <h3 style={{ margin: '0 0 4px 0', color: '#9945FF' }}>
                 {totalSales}
               </h3>
-              <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Total Sales</p>
+              <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Fans Sold</p>
             </div>
             <div className="card" style={{ padding: '20px', textAlign: 'center' }}>
               <Eye size={24} style={{ color: '#f59e0b', marginBottom: '8px' }} />
               <h3 style={{ margin: '0 0 4px 0', color: '#f59e0b' }}>
                 {averageEarning.toFixed(3)} SOL
               </h3>
-              <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Average Sale</p>
+              <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>Average Fan Price</p>
             </div>
           </div>
           
           {chartData.length > 0 && (
             <div className="card" style={{ padding: '20px', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>Total Earnings Over Time</h2>
+              <h2 style={{ 
+                fontSize: '18px', 
+                fontWeight: 'bold', 
+                marginBottom: '16px',
+                background: "linear-gradient(45deg, #9945FF, #14F195)", 
+                WebkitBackgroundClip: "text", 
+                WebkitTextFillColor: "transparent"
+              }}>
+                Fan Sales Revenue Over Time
+              </h2>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart
                   data={chartData}
@@ -411,7 +548,14 @@ export default function MyNFTs() {
                   <XAxis dataKey="date" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
                   <Tooltip />
-                  <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="amount" 
+                    stroke="#14F195" 
+                    strokeWidth={2} 
+                    dot={{ r: 4, fill: '#9945FF' }} 
+                    activeDot={{ r: 8, fill: '#14F195' }} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -421,9 +565,15 @@ export default function MyNFTs() {
       
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
-          <span className="tag">Total: {nfts.length}</span>
-          <span className="tag">Listed: {listedCount}</span>
-          <span className="tag">Sold: {soldCount}</span>
+          <span className="tag" style={{ backgroundColor: '#9945FF', color: 'white' }}>
+            Total Fans: {nfts.length}
+          </span>
+          <span className="tag" style={{ backgroundColor: '#14F195', color: 'white' }}>
+            Listed: {listedCount}
+          </span>
+          <span className="tag" style={{ backgroundColor: '#10b981', color: 'white' }}>
+            Sold: {soldCount}
+          </span>
         </div>
         
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
@@ -431,20 +581,24 @@ export default function MyNFTs() {
             className="button"
             onClick={() => setFilter('all')}
             style={{ 
-              backgroundColor: filter === 'all' ? '#3b82f6' : '#6b7280',
+              background: filter === 'all' ? 'linear-gradient(45deg, #9945FF, #14F195)' : '#6b7280',
               fontSize: '14px',
-              padding: '6px 12px'
+              padding: '6px 12px',
+              border: 'none',
+              color: 'white'
             }}
           >
-            All ({nfts.length})
+            All Fans ({nfts.length})
           </button>
           <button
             className="button"
             onClick={() => setFilter('listed')}
             style={{ 
-              backgroundColor: filter === 'listed' ? '#3b82f6' : '#6b7280',
+              background: filter === 'listed' ? 'linear-gradient(45deg, #9945FF, #14F195)' : '#6b7280',
               fontSize: '14px',
-              padding: '6px 12px'
+              padding: '6px 12px',
+              border: 'none',
+              color: 'white'
             }}
           >
             Listed ({listedCount})
@@ -453,9 +607,11 @@ export default function MyNFTs() {
             className="button"
             onClick={() => setFilter('sold')}
             style={{ 
-              backgroundColor: filter === 'sold' ? '#3b82f6' : '#6b7280',
+              background: filter === 'sold' ? 'linear-gradient(45deg, #9945FF, #14F195)' : '#6b7280',
               fontSize: '14px',
-              padding: '6px 12px'
+              padding: '6px 12px',
+              border: 'none',
+              color: 'white'
             }}
           >
             Sold ({soldCount})
@@ -465,7 +621,28 @@ export default function MyNFTs() {
       
       {renderContent()}
       
-      <p className="footer">Manage your listed NFTs and track your sales.</p>
+      <div style={{ 
+        textAlign: 'center', 
+        marginTop: '40px', 
+        padding: '20px',
+        borderTop: '1px solid #e2e8f0'
+      }}>
+        <p style={{ 
+          color: '#64748b', 
+          fontSize: '14px',
+          margin: '0 0 8px 0'
+        }}>
+          Track your premium electric fan NFT sales and manage your listings
+        </p>
+        <p style={{ 
+          color: '#9945FF', 
+          fontSize: '12px',
+          margin: 0,
+          fontWeight: '500'
+        }}>
+          OnlyFans - Where Fan Creators Build Their Empire
+        </p>
+      </div>
     </div>
   );
 }

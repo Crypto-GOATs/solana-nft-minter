@@ -34,8 +34,7 @@ export default function DropzonePreview({ onFileSelected }) {
       <input {...getInputProps()} />
       {!file && (
         <>
-          <p><strong>Drag & drop</strong> an image or video here, or click to select.</p>
-          <p className="small">Supported: PNG, JPG, GIF, WEBP, MP4, MOV, WEBM, M4V</p>
+          <p><strong>Drag & drop</strong> your fan image here, or click to select.</p>
         </>
       )}
       {file && (

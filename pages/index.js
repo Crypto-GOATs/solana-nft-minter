@@ -24,8 +24,8 @@ export default function Home() {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [name, setName] = useState("My NFT");
-  const [description, setDescription] = useState("Minted via my Solana dApp");
+  const [name, setName] = useState("My fan");
+  const [description, setDescription] = useState("My fan is cooler than Elon's");
   const [royaltiesBps, setRoyaltiesBps] = useState(500); // 5%
   const [price, setPrice] = useState("0.1"); // SOL
   const [status, setStatus] = useState("");
@@ -260,12 +260,12 @@ export default function Home() {
       }).sendAndConfirm(umi);
 
       setMintAddress(mint.publicKey.toString());
-      setStatus("✅ NFT Minted Successfully!");
+      setStatus("✅ OnlyFan content generated Successfully!");
       setShowListing(true);
       
     } catch (e) {
       console.error(e);
-      setStatus(e.message || "Mint failed");
+      setStatus(e.message || "OnlyFan content generation failed");
     } finally {
       setBusy(false);
     }
@@ -305,11 +305,6 @@ export default function Home() {
         );
 
         setStatus("Sending transaction...");
-        console.log("Seller:", wallet.publicKey.toString());
-        console.log("NFT Mint:", mintPublicKey.toString());
-        console.log("Seller Token Account:", sellerTokenAccount.toString());
-        console.log("Listing Account:", listingKeypair.publicKey.toString());
-        console.log("Escrow Token Account:", escrowTokenAccount.toString());
 
         // Use the existing program but ensure wallet is signing
         const tx = program.methods
@@ -345,13 +340,98 @@ export default function Home() {
 
   return (
     <div className="container">
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-        <h1>OnlyFun</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* Animated OnlyFans Logo */}
+          <div style={{ width: "60px", height: "40px" }}>
+            <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+              <defs>
+                <linearGradient id="fanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor:"#9945FF", stopOpacity:1}} />
+                  <stop offset="50%" style={{stopColor:"#14F195", stopOpacity:1}} />
+                  <stop offset="100%" style={{stopColor:"#9945FF", stopOpacity:1}} />
+                </linearGradient>
+                
+                <linearGradient id="solanaGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style={{stopColor:"#9945FF", stopOpacity:1}} />
+                  <stop offset="100%" style={{stopColor:"#14F195", stopOpacity:1}} />
+                </linearGradient>
+                
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              
+              <circle cx="150" cy="80" r="45" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" opacity="0.8"/>
+              
+              <g filter="url(#glow)">
+                <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transformOrigin="150 80">
+                  <animateTransform attributeName="transform" attributeType="XML"
+                                    type="rotate" from="0 150 80" to="360 150 80"
+                                    dur="1.5s" repeatCount="indefinite"/>
+                </ellipse>
+                
+                <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transform="rotate(120 150 80)" transformOrigin="150 80">
+                  <animateTransform attributeName="transform" attributeType="XML"
+                                    type="rotate" from="120 150 80" to="480 150 80"
+                                    dur="1.5s" repeatCount="indefinite"/>
+                </ellipse>
+                
+                <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transform="rotate(240 150 80)" transformOrigin="150 80">
+                  <animateTransform attributeName="transform" attributeType="XML"
+                                    type="rotate" from="240 150 80" to="600 150 80"
+                                    dur="1.5s" repeatCount="indefinite"/>
+                </ellipse>
+              </g>
+              
+              <circle cx="150" cy="80" r="8" fill="#1e293b"/>
+              <circle cx="150" cy="80" r="4" fill="url(#solanaGradient)"/>
+              
+              <rect x="147" y="115" width="6" height="25" fill="#475569" rx="3"/>
+              <ellipse cx="150" cy="145" rx="20" ry="5" fill="#64748b"/>
+              
+              <text x="150" y="170" fontFamily="Arial, sans-serif" fontSize="28" fontWeight="bold" 
+                    textAnchor="middle" fill="url(#solanaGradient)">
+                OnlyFans
+              </text>
+              
+              <text x="150" y="190" fontFamily="Arial, sans-serif" fontSize="10" 
+                    textAnchor="middle" fill="#64748b" fontStyle="italic">
+                Premium Electric Fan NFTs
+              </text>
+              
+              <g opacity="0.4">
+                <path d="M 200 60 Q 220 65 240 60" stroke="#14F195" strokeWidth="2" fill="none" strokeLinecap="round">
+                  <animate attributeName="opacity" values="0.4;0.8;0.4" dur="1.5s" repeatCount="indefinite"/>
+                </path>
+                <path d="M 205 75 Q 230 78 250 75" stroke="#14F195" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                  <animate attributeName="opacity" values="0.3;0.7;0.3" dur="1.7s" repeatCount="indefinite"/>
+                </path>
+              </g>
+              
+              <rect x="10" y="10" width="30" height="15" rx="7" fill="#1e293b" opacity="0.9"/>
+              <text x="25" y="21" fontFamily="Arial, sans-serif" fontSize="8" fontWeight="bold" 
+                    textAnchor="middle" fill="#14F195">NFT</text>
+            </svg>
+          </div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: "28px", background: "linear-gradient(45deg, #9945FF, #14F195)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              OnlyFans
+            </h1>
+            <p style={{ margin: 0, fontSize: "12px", color: "#64748b", fontStyle: "italic" }}>
+              AI-Verified Electric Fan Marketplace
+            </p>
+          </div>
+        </div>
         <WalletMultiButton />
       </div>
 
       <div className="card">
-        <h2>1. Upload your file</h2>
+        <h2>1. Upload your fan picture</h2>
         <DropzonePreview onFileSelected={setFile} />
         
         {/* Show image preview */}
@@ -394,9 +474,6 @@ export default function Home() {
                 <p style={{ margin: '0' }}>
                   <strong>Confidence:</strong> {(classificationResult.confidence * 100).toFixed(1)}%
                 </p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '14px' }}>
-                  <strong>ImageNet Index:</strong> {classificationResult.topIndex}
-                </p>
               </>
             )}
           </div>
@@ -404,7 +481,7 @@ export default function Home() {
         
         <hr />
 
-        <h2>2. Metadata</h2>
+        <h2>2. Fan info</h2>
         <div className="row">
           <div style={{ flex: 1, minWidth: 260 }}>
             <label>Name</label>
@@ -429,13 +506,13 @@ export default function Home() {
 
         <hr />
 
-        <h2>3. Mint</h2>
+        <h2>3. Generate your fan</h2>
         <button 
           className="button" 
           disabled={busy || !selectedFile} 
           onClick={handleMint}
         >
-          {busy ? "Minting..." : "Mint NFT"}
+          {busy ? "Generating..." : "Generate fan"}
         </button>
 
         {/* Show listing section after successful mint */}
@@ -477,22 +554,20 @@ export default function Home() {
           <p>Status: <span className="tag">{status || "Idle"}</span></p>
           {mintAddress && (
             <div>
-              <p>Mint Address: <code>{mintAddress}</code></p>
+              <p>Fan Address: <code>{mintAddress}</code></p>
               {!showListing && (
                 <button 
                   className="button" 
                   onClick={() => setShowListing(true)}
                   style={{ backgroundColor: '#10b981', marginTop: 8 }}
                 >
-                  List This NFT for Sale
+                  List This fan for Sale
                 </button>
               )}
             </div>
           )}
         </div>
       </div>
-
-      <p className="footer">Built with Umi, Wallet Adapter, and your backend uploader.</p>
     </div>
   );
 }

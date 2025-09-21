@@ -24,8 +24,8 @@ function AppContent({ Component, pageProps }) {
   return (
     <>
     <Head>
-        <title>OnlyFun</title>
-        <link rel="icon" href="/onlyfun.ico" />
+        <title>OnlyFans</title>
+        <link rel="icon" href="/onlyfans-logo.svg" />
       </Head>
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
@@ -34,7 +34,7 @@ function AppContent({ Component, pageProps }) {
           <div className="container flex flex-wrap items-center justify-between py-4">
             <div className="flex gap-4">
               <Link href="/">
-                <button className="button">Mint</button>
+                <button className="button">Generate</button>
               </Link>
               <Link href="/my-nfts">
                 <button className="button">My listings</button>
