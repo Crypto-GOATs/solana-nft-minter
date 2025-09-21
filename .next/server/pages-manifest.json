@@ -1,12 +1,11 @@
 {
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
-  "/": "pages/index.html",
   "/marketplace": "pages/marketplace.html",
-  "/api/metaplex": "pages/api/metaplex.js",
-  "/my-content": "pages/my-content.html",
-  "/earnings": "pages/earnings.html",
   "/my-nfts": "pages/my-nfts.html",
+  "/": "pages/index.html",
+  "/earnings": "pages/earnings.html",
+  "/my-content": "pages/my-content.html",
   "/api/upload": "pages/api/upload.js",
   "/_document": "pages/_document.js",
   "/404": "pages/404.html"
