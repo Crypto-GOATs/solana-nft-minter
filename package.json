@@ -37,6 +37,6 @@
     "@types/react": "19.1.11"
   },
   "engines": {
-    "node": "24.6.0"
+    "node": "22.x"
   }
 }
