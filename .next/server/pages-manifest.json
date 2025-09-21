@@ -1,12 +1,12 @@
 {
   "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/api/metaplex": "pages/api/metaplex.js",
-  "/": "pages/index.html",
   "/earnings": "pages/earnings.html",
-  "/my-content": "pages/my-content.html",
-  "/my-nfts": "pages/my-nfts.html",
+  "/": "pages/index.html",
+  "/_error": "pages/_error.js",
   "/marketplace": "pages/marketplace.html",
+  "/my-nfts": "pages/my-nfts.html",
+  "/my-content": "pages/my-content.html",
+  "/api/metaplex": "pages/api/metaplex.js",
   "/api/upload": "pages/api/upload.js",
   "/_document": "pages/_document.js",
   "/404": "pages/404.html"
