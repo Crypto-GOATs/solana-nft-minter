@@ -25,6 +25,7 @@
     "@coral-xyz/anchor": "0.31.1",
     "lucide-react": "*",
     "recharts": "*",
+    "@tensorflow/tfjs": "*",
   "@solana/web3.js": "^1.87.6",
   "@solana/wallet-adapter-react": "^0.15.32",
   "@solana/wallet-adapter-react-ui": "^0.9.35",

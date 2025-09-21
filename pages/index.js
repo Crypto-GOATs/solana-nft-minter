@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
@@ -10,6 +10,7 @@ import DropzonePreview from "@/components/DropzonePreview";
 import { getConnection } from "@/lib/solana";
 import { useProgram } from "@/contexts/ProgramProvider";
 import * as anchor from "@coral-xyz/anchor";
+import * as tf from '@tensorflow/tfjs';
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey, SystemProgram, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/web3.js";
 
@@ -22,6 +23,7 @@ export default function Home() {
   const { program } = useProgram();
 
   const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [name, setName] = useState("My NFT");
   const [description, setDescription] = useState("Minted via my Solana dApp");
   const [royaltiesBps, setRoyaltiesBps] = useState(500); // 5%
@@ -30,6 +32,175 @@ export default function Home() {
   const [mintAddress, setMintAddress] = useState(null);
   const [busy, setBusy] = useState(false);
   const [showListing, setShowListing] = useState(false);
+  const [classificationResult, setClassificationResult] = useState(null);
+  const [isValidFan, setIsValidFan] = useState(false);
+  const [modelLoaded, setModelLoaded] = useState(false);
+
+  const modelRef = useRef(null);
+
+  // Load the MobileNet model for image classification
+  const loadModel = useCallback(async () => {
+    try {
+      setStatus("Loading AI model...");
+      const model = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_1.0_224/model.json');
+      modelRef.current = model;
+      setModelLoaded(true);
+      setStatus("AI model loaded successfully!");
+    } catch (error) {
+      console.error('Error loading model:', error);
+      setStatus("Failed to load AI model. Image validation disabled.");
+    }
+  }, []);
+
+  // FIXED: Use useEffect instead of useState
+  useEffect(() => {
+    loadModel();
+  }, [loadModel]);
+
+  // Clean up object URLs when component unmounts or preview changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  // Preprocess image for MobileNet
+  const preprocessImage = useCallback((imageElement) => {
+    return tf.tidy(() => {
+      // Convert image to tensor
+      let tensor = tf.browser.fromPixels(imageElement);
+      
+      // Resize to 224x224 (MobileNet input size)
+      const resized = tf.image.resizeBilinear(tensor, [224, 224]);
+      
+      // Normalize pixel values to [-1, 1] (MobileNet expects this range)
+      const normalized = resized.div(127.5).sub(1);
+      
+      // Add batch dimension
+      const batched = normalized.expandDims(0);
+      
+      return batched;
+    });
+  }, []);
+
+  // FIXED: Return the classification result instead of just boolean
+  const classifyImage = useCallback(async (file) => {
+    if (!modelRef.current) {
+      const errorResult = { error: "Model not loaded", isFan: false };
+      setClassificationResult(errorResult);
+      return errorResult;
+    }
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          // Preprocess the image
+          const preprocessed = preprocessImage(img);
+          
+          // Make prediction
+          const predictions = await modelRef.current.predict(preprocessed).data();
+          
+          // Get top prediction
+          const topPredictionIndex = Array.from(predictions)
+            .map((p, i) => ({ probability: p, index: i }))
+            .sort((a, b) => b.probability - a.probability)[0];
+
+          console.log('Top prediction:', topPredictionIndex);
+
+          const confidence = topPredictionIndex.probability;
+          
+          // Check if it's a fan (ImageNet class 545)
+          const fanClassIndices = [545];
+          const isFan = fanClassIndices.includes(topPredictionIndex.index) && confidence > 0.3;
+          
+          console.log(`Is fan: ${isFan} (class index: ${topPredictionIndex.index}, confidence: ${confidence})`);
+          
+          const result = {
+            isFan,
+            confidence: confidence,
+            className: isFan ? 'Electric Fan' : 'Not a Fan',
+            topIndex: topPredictionIndex.index
+          };
+          
+          setClassificationResult(result);
+          setIsValidFan(isFan);
+          
+          // Clean up tensors
+          preprocessed.dispose();
+          
+          resolve(result); // Return the full result
+        } catch (error) {
+          console.error('Classification error:', error);
+          const errorResult = { error: error.message, isFan: false };
+          setClassificationResult(errorResult);
+          resolve(errorResult);
+        }
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }, [preprocessImage]);
+
+  // FIXED: Add validation for file parameter
+  const setFile = useCallback(async (file) => {
+    // Handle file removal case
+    if (!file) {
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setIsValidFan(false);
+      setClassificationResult(null);
+      setStatus("No file selected");
+      return;
+    }
+
+    // Validate that it's actually a File object
+    if (!(file instanceof File) && !(file instanceof Blob)) {
+      console.error('Invalid file object:', file);
+      setStatus("Invalid file. Please select a valid image file.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      setStatus("Processing image...");
+      setSelectedFile(null);
+      setIsValidFan(false);
+      setClassificationResult(null);
+      
+      // Clean up previous preview URL to prevent memory leaks
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+
+      if (modelLoaded) {
+        console.log("Classifying image...");
+        const result = await classifyImage(file);
+        
+        // Use the returned result instead of state
+        if (result.isFan && !result.error) {
+          setSelectedFile(file);
+          setStatus("✅ Fan detected! Image approved for minting.");
+        } else {
+          setStatus("❌ This doesn't appear to be a fan. Please upload an image of an electric fan.");
+        }
+      } else {
+        // If model isn't loaded, allow upload but warn
+        setSelectedFile(file);
+        setStatus("⚠️ AI validation unavailable. Proceeding without verification.");
+        setIsValidFan(true);
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      setStatus("Error processing image. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }, [modelLoaded, classifyImage, previewUrl]);
 
   // Upload to your backend API → NFT.storage or Pinata
   const uploadToIPFS = useCallback(async () => {
@@ -90,7 +261,7 @@ export default function Home() {
 
       setMintAddress(mint.publicKey.toString());
       setStatus("✅ NFT Minted Successfully!");
-      setShowListing(true); // Show listing section after successful mint
+      setShowListing(true);
       
     } catch (e) {
       console.error(e);
@@ -181,7 +352,56 @@ export default function Home() {
 
       <div className="card">
         <h2>1. Upload your file</h2>
-        <DropzonePreview onFileSelected={setSelectedFile} />
+        <DropzonePreview onFileSelected={setFile} />
+        
+        {/* Show image preview */}
+        {previewUrl && (
+          <div style={{ marginTop: 16 }}>
+            <img 
+              src={previewUrl} 
+              alt="Preview" 
+              style={{ 
+                maxWidth: '300px', 
+                maxHeight: '300px', 
+                borderRadius: '8px',
+                border: '2px solid #e5e7eb'
+              }} 
+            />
+          </div>
+        )}
+        
+        {/* Show classification result */}
+        {classificationResult && (
+          <div style={{ 
+            marginTop: 16, 
+            padding: 12, 
+            borderRadius: 8,
+            backgroundColor: isValidFan ? '#f0fdf4' : '#fef2f2',
+            border: `1px solid ${isValidFan ? '#22c55e' : '#ef4444'}`
+          }}>
+            <h4 style={{ margin: '0 0 8px 0', color: isValidFan ? '#16a34a' : '#dc2626' }}>
+              AI Classification Result:
+            </h4>
+            {classificationResult.error ? (
+              <p style={{ margin: 0, color: '#dc2626' }}>
+                Error: {classificationResult.error}
+              </p>
+            ) : (
+              <>
+                <p style={{ margin: '0 0 4px 0' }}>
+                  <strong>Classification:</strong> {classificationResult.className}
+                </p>
+                <p style={{ margin: '0' }}>
+                  <strong>Confidence:</strong> {(classificationResult.confidence * 100).toFixed(1)}%
+                </p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px' }}>
+                  <strong>ImageNet Index:</strong> {classificationResult.topIndex}
+                </p>
+              </>
+            )}
+          </div>
+        )}
+        
         <hr />
 
         <h2>2. Metadata</h2>
