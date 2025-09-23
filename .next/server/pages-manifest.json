@@ -2,8 +2,9 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
+  "/my-content": "pages/my-content.js",
   "/marketplace": "pages/marketplace.js",
-  "/my-nfts": "pages/my-nfts.js",
   "/": "pages/index.js",
-  "/my-content": "pages/my-content.js"
+  "/api/upload": "pages/api/upload.js",
+  "/my-nfts": "pages/my-nfts.js"
 }

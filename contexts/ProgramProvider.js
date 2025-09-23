@@ -25,7 +25,7 @@ export const ProgramProvider = ({ children }) => {
         setError(null);
         
         
-        const programId = new PublicKey("8HFHKEB2m6QF6e8VW6iWzgh1xLmfvrPMJXsAzsLHkj9w");
+        const programId = new PublicKey("5Hixra6LUDzgLfE3C3S11H4h3f2Psnq6LkcxuEaKP8sb");
         
         // Use the devnet cluster
         const connection = new Connection("https://api.devnet.solana.com", "confirmed");

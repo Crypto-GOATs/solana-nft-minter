@@ -1,5 +1,5 @@
 {
-  "address": "8HFHKEB2m6QF6e8VW6iWzgh1xLmfvrPMJXsAzsLHkj9w",
+  "address": "5Hixra6LUDzgLfE3C3S11H4h3f2Psnq6LkcxuEaKP8sb",
   "metadata": {
     "name": "solana_marketplace",
     "version": "0.1.0",
@@ -55,6 +55,10 @@
           "relations": [
             "listing"
           ]
+        },
+        {
+          "name": "fee_recipient",
+          "writable": true
         },
         {
           "name": "escrow_token_account",
@@ -290,6 +294,33 @@
         26,
         58
       ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidPrice",
+      "msg": "Invalid price: must be greater than 0"
+    },
+    {
+      "code": 6001,
+      "name": "PriceTooHigh",
+      "msg": "Price too high"
+    },
+    {
+      "code": 6002,
+      "name": "SellerDoesNotOwnNft",
+      "msg": "Seller does not own the NFT"
+    },
+    {
+      "code": 6003,
+      "name": "ListingClosed",
+      "msg": "Listing is already closed"
+    },
+    {
+      "code": 6004,
+      "name": "UnauthorizedSeller",
+      "msg": "Only the seller can unlist this NFT"
     }
   ],
   "types": [

@@ -184,9 +184,9 @@ export default function Home() {
         // Use the returned result instead of state
         if (result.isFan && !result.error) {
           setSelectedFile(file);
-          setStatus("✅ Fan detected! Image approved for minting.");
+          setStatus("✅ Fan detected! Let's cool it up|");
         } else {
-          setStatus("❌ This doesn't appear to be a fan. Please upload an image of an electric fan.");
+          setStatus("❌ Bro that's not a fan! You can't get past the fan police🚔");
         }
       } else {
         // If model isn't loaded, allow upload but warn
@@ -468,11 +468,8 @@ export default function Home() {
               </p>
             ) : (
               <>
-                <p style={{ margin: '0 0 4px 0' }}>
+                <p style={{ margin: '0 0 4px 0', color: isValidFan ? '#16a34a' : '#dc2626'  }}>
                   <strong>Classification:</strong> {classificationResult.className}
-                </p>
-                <p style={{ margin: '0' }}>
-                  <strong>Confidence:</strong> {(classificationResult.confidence * 100).toFixed(1)}%
                 </p>
               </>
             )}
