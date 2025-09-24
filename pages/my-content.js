@@ -686,6 +686,7 @@ export default function MyContent() {
       setListing(nft.mint?.toString() || 'listing');
       
       const mintAddress = nft.mint;
+      const mintPublicKey = new PublicKey(mintAddress);
       
       if (!mintAddress) {
         alert('Cannot find mint address for this Fan NFT');
@@ -716,7 +717,7 @@ export default function MyContent() {
           escrowTokenAccount: escrowTokenAccount,
           seller: walletPublicKey,
           sellerTokenAccount: sellerTokenAccount,
-          mint: mintAddress,
+          mint: mintPublicKey,
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,

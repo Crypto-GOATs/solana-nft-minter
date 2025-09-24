@@ -8,9 +8,11 @@ import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { mplTokenMetadata, fetchDigitalAsset } from "@metaplex-foundation/mpl-token-metadata";
 import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
 import { publicKey } from '@metaplex-foundation/umi';
-import { getAssociatedTokenAddressSync } from '@solana/spl-token';
+import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { DollarSign, TrendingUp, Activity, Eye, RefreshCw } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { PublicKey, SystemProgram, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/web3.js";
+
 
 // Helper function to fetch NFT metadata
 const fetchNFTMetadata = async (mintAddress, connection, wallet) => {
@@ -207,36 +209,44 @@ export default function MyNFTs() {
   }, [program, walletPublicKey, connected, wallet]);
 
   const handleUnlistNFT = async (listing) => {
-    if (!program || !walletPublicKey) return;
-    try {
-      setUnlisting(listing.publicKey.toString());
-      
-      const mintAddress = listing.account.mint;
-      const tokenAccount = getAssociatedTokenAddressSync(mintAddress, walletPublicKey);
-      
-      const unlistTransaction = await program.methods.unlistNft()
-        .accounts({
-          listing: listing.publicKey,
-          mint: mintAddress,
-          seller: walletPublicKey,
-          sellerTokenAccount: tokenAccount,
-        })
-        .transaction();
-      
-      const txId = await program.provider.sendAndConfirm(unlistTransaction);
-      console.log('Unlist transaction successful:', txId);
-      
-      await fetchNFTs(); // Refresh the NFT list
-      alert('Fan NFT unlisted successfully!');
+  if (!program || !walletPublicKey) return;
+  try {
+    setUnlisting(listing.publicKey.toString());
+    
+    const mintAddress = listing.account.mint;
+    const tokenAccount = getAssociatedTokenAddressSync(mintAddress, walletPublicKey);
+    
+    // Add the escrow token account
+    const [escrowTokenAccount] = PublicKey.findProgramAddressSync(
+      [Buffer.from("escrow"), mintAddress.toBuffer()],
+      program.programId
+    );
+    
+    const unlistTransaction = await program.methods.unlistNft()
+      .accounts({
+        listing: listing.publicKey,
+        escrowTokenAccount: escrowTokenAccount, // ADD THIS
+        mint: mintAddress,
+        seller: walletPublicKey,
+        sellerTokenAccount: tokenAccount,
+        tokenProgram: TOKEN_PROGRAM_ID, // ADD THIS
+        systemProgram: SystemProgram.programId, // ADD THIS
+      })
+      .transaction();
+    
+    const txId = await program.provider.sendAndConfirm(unlistTransaction);
+    console.log('Unlist transaction successful:', txId);
+    
+    await fetchNFTs();
+    alert('Fan NFT unlisted successfully!');
 
-    } catch (err) {
-      console.error("Error unlisting Fan NFT:", err);
-      alert(`Failed to unlist Fan NFT: ${err.message}`);
-    } finally {
-      setUnlisting(null);
-    }
-  };
-
+  } catch (err) {
+    console.error("Error unlisting Fan NFT:", err);
+    alert(`Failed to unlist Fan NFT: ${err.message}`);
+  } finally {
+    setUnlisting(null);
+  }
+};
   // Use useMemo to calculate statistics and chart data
   const { totalEarnings, totalSales, averageEarning, chartData } = useMemo(() => {
     const soldItems = nfts.filter(nft => nft.account.closed);
