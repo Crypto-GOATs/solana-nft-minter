@@ -113,20 +113,13 @@ const ContentCard = ({
 }) => {
   const [showPriceEdit, setShowPriceEdit] = useState(false);
   const [newPrice, setNewPrice] = useState('');
+  const isOwned = true;
   
   // Safety check - if no mint address, don't render this NFT
   if (!nft || !nft.mint) {
     console.warn('Invalid Fan NFT object:', nft);
     return null;
   }
-  
-  // Check if NFT has listing info (account property exists when listed/sold)
-  const hasListing = nft.account && nft.publicKey;
-  const priceInSOL = hasListing && nft.account.price ? 
-    (nft.account.price.toNumber() / 1_000_000_000).toFixed(3) : 'N/A';
-  const isSold = hasListing ? (nft.account.closed || false) : false;
-  const isListed = hasListing && !isSold;
-  const isOwned = !hasListing; // Not listed and not sold = just owned
   
   const handleEditPrice = () => {
     if (!newPrice || parseFloat(newPrice) <= 0) {
@@ -152,7 +145,6 @@ const ContentCard = ({
                   height: '100%', 
                   objectFit: 'cover', 
                   borderRadius: '8px',
-                  filter: isSold ? 'grayscale(50%)' : 'none'
                 }}
                 onError={(e) => e.target.src = '/placeholder-image.svg'}
               />
@@ -180,16 +172,16 @@ const ContentCard = ({
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px' }}>
               <span style={{ color: '#6b7280' }}>
-                {isListed ? `${priceInSOL} SOL` : isSold ? 'Sold' : 'Owned'}
+                {'Owned'}
               </span>
               <span className="tag" style={{ 
-                backgroundColor: isSold ? '#10b981' : isListed ? '#9945FF' : '#14F195',
+                backgroundColor: '#14F195',
                 color: 'white',
                 fontSize: '12px',
                 padding: '2px 6px',
                 borderRadius: '4px'
               }}>
-                {isSold ? 'Sold' : isListed ? 'Listed' : 'Owned'}
+                {'Owned'}
               </span>
             </div>
           </div>
@@ -212,33 +204,6 @@ const ContentCard = ({
               </button>
             )}
             
-            {isListed && (
-              <>
-                <button
-                  className="button"
-                  onClick={() => setShowPriceEdit(!showPriceEdit)}
-                  style={{ 
-                    backgroundColor: '#3b82f6',
-                    fontSize: '14px',
-                    padding: '6px 12px'
-                  }}
-                >
-                  Edit Price
-                </button>
-                <button
-                  className="button"
-                  onClick={() => onUnlist(nft)}
-                  disabled={isUnlisting}
-                  style={{ 
-                    backgroundColor: isUnlisting ? '#6b7280' : '#ef4444',
-                    fontSize: '14px',
-                    padding: '6px 12px'
-                  }}
-                >
-                  {isUnlisting ? 'Unlisting...' : 'Unlist'}
-                </button>
-              </>
-            )}
           </div>
         </div>
         
@@ -306,7 +271,6 @@ const ContentCard = ({
                 height: '100%', 
                 objectFit: 'cover', 
                 borderRadius: '8px',
-                filter: isSold ? 'grayscale(50%)' : 'none'
               }}
               onError={(e) => e.target.src = '/placeholder-image.svg'}
             />
@@ -348,28 +312,16 @@ const ContentCard = ({
             <div style={{ marginBottom: '4px' }}>
               <strong>Status:</strong>{' '}
               <span className="tag" style={{ 
-                backgroundColor: isSold ? '#10b981' : isListed ? '#9945FF' : '#14F195',
+                backgroundColor: '#14F195',
                 color: 'white',
                 padding: '4px 8px',
                 borderRadius: '4px',
                 fontSize: '12px'
               }}>
-                {isSold ? 'Sold' : isListed ? 'Listed' : 'Owned'}
+                {'Owned'}
               </span>
             </div>
             
-            {isListed && (
-              <div style={{ marginBottom: '4px' }}>
-                <strong>Price:</strong>{' '}
-                <span style={{ 
-                  color: '#9945FF', 
-                  fontWeight: 'bold',
-                  fontSize: '16px'
-                }}>
-                  {priceInSOL} SOL
-                </span>
-              </div>
-            )}
           </div>
           
           {showPriceEdit && (
@@ -417,7 +369,6 @@ const ContentCard = ({
               <button
                 className="button"
                 onClick={() => onList(nft)}
-                disabled={isListing}
                 style={{ 
                   background: isListing ? '#6b7280' : 'linear-gradient(45deg, #9945FF, #14F195)',
                   border: 'none',
@@ -428,36 +379,6 @@ const ContentCard = ({
               </button>
             )}
             
-            {isListed && (
-              <>
-                <button
-                  className="button"
-                  onClick={() => setShowPriceEdit(!showPriceEdit)}
-                  style={{ backgroundColor: '#3b82f6' }}
-                >
-                  Edit Price
-                </button>
-                <button
-                  className="button"
-                  onClick={() => onUnlist(nft)}
-                  disabled={isUnlisting}
-                  style={{ backgroundColor: isUnlisting ? '#6b7280' : '#ef4444' }}
-                >
-                  {isUnlisting ? 'Unlisting Fan...' : 'Unlist Fan NFT'}
-                </button>
-              </>
-            )}
-
-            {isSold && (
-              <span style={{ 
-                color: '#10b981', 
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                ✅ Fan Successfully Sold!
-              </span>
-            )}
           </div>
         </div>
       </div>
@@ -700,6 +621,14 @@ export default function MyContent() {
         program.programId
       );
       
+      // Step 1: Check if the listing account already exists
+      const listingAccountInfo = await program.provider.connection.getAccountInfo(listingAccount);
+      
+      if (listingAccountInfo) {
+        // If it exists, the NFT is already listed. Throw an error.
+        throw new Error('This NFT is already listed for sale.');
+      }
+      
       const [escrowTokenAccount] = PublicKey.findProgramAddressSync(
         [Buffer.from("escrow"), mintAddress.toBuffer()],
         program.programId
@@ -737,7 +666,7 @@ export default function MyContent() {
     } finally {
       setListing(null);
     }
-  };
+};
 
   const handleUnlistNFT = async (listing) => {
     if (!program || !walletPublicKey) return;
@@ -788,13 +717,8 @@ export default function MyContent() {
   };
 
   const filteredNFTs = nfts.filter(nft => {
-    const hasListing = nft.account && nft.publicKey;
-    const isListed = hasListing && !nft.account.closed;
-    const isSold = hasListing && nft.account.closed;
-    const isOwned = !hasListing;
+    const isOwned = true;
     
-    if (filter === 'listed') return isListed;
-    if (filter === 'sold') return isSold;
     if (filter === 'owned') return isOwned;
     return true;
   });

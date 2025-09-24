@@ -264,6 +264,7 @@ export default function Marketplace() {
 
       const methodToCall = program.methods?.buyNft || program.rpc?.buyNft;
       if (!methodToCall) throw new Error("buyNft method not found on program");
+      const feeRecipient = new PublicKey("5GrJ4aUiQRc1frnxyv89ws27wPu2fxsgJvxHgLmEjBBq");
 
       let txBuilder = methodToCall()
         .accounts({
@@ -273,8 +274,13 @@ export default function Marketplace() {
           escrowTokenAccount: escrowTokenAccount,
           buyerTokenAccount: buyerTokenAccount,
           mint: mint,
+          feeRecipient: feeRecipient,
+          // Add this line to provide the rentRecipient account
+          rentRecipient: listing.account.seller,
           tokenProgram: anchor.web3.TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
+          associatedTokenProgram: anchor.web3.ASSOCIATED_TOKEN_PROGRAM_ID,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         });
 
       if (preInstructions.length > 0) {
