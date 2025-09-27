@@ -48,6 +48,9 @@ function AppContent({ Component, pageProps }) {
               <Link href="/my-content">  
                 <button className="button">My Content</button>
               </Link>
+              <Link href="/litepaper">  
+                <button className="button">Litepaper</button>
+              </Link>
             </div>
             <div>
             </div>
