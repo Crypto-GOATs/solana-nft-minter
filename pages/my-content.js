@@ -732,7 +732,7 @@ export default function MyContent() {
       return <p style={{ color: 'red' }}>Program error: {programError}</p>;
     }
     if (!program) {
-      return <p>Loading OnlyFans program...</p>;
+      return <p>Loading SolanaOnlyFans program...</p>;
     }
     if (!connected) {
       return (

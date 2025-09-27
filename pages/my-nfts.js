@@ -325,7 +325,7 @@ export default function MyNFTs() {
             <div>
               <div style={{ fontWeight: 'bold' }}>Loading your Fan NFTs...</div>
               <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                Fetching listing and sales data from OnlyFans marketplace.
+                Fetching listing and sales data from SolanaOnlyFans marketplace.
               </div>
             </div>
           </div>
@@ -442,7 +442,7 @@ export default function MyNFTs() {
               {/* Logo text */}
               <text x="150" y="170" fontFamily="Arial, sans-serif" fontSize="28" fontWeight="bold" 
                     textAnchor="middle" fill="url(#solanaGradient)">
-                OnlyFans
+                SolanaOnlyFans
               </text>
               
               <text x="150" y="190" fontFamily="Arial, sans-serif" fontSize="10" 
@@ -650,7 +650,7 @@ export default function MyNFTs() {
           margin: 0,
           fontWeight: '500'
         }}>
-          OnlyFans - Where Fan Creators Build Their Empire
+          SolanaOnlyFans - Where Fan Creators Build Their Empire
         </p>
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import Head from 'next/head'; // <--- 1. IMPORT HEAD
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
@@ -30,11 +31,14 @@ export default function Home() {
   const [price, setPrice] = useState("0.1"); // SOL
   const [status, setStatus] = useState("");
   const [mintAddress, setMintAddress] = useState(null);
+  const [imageUrlForOG, setImageUrlForOG] = useState(null); // <--- 2. NEW STATE VARIABLE
   const [busy, setBusy] = useState(false);
   const [showListing, setShowListing] = useState(false);
   const [classificationResult, setClassificationResult] = useState(null);
   const [isValidFan, setIsValidFan] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
+  const [isListed, setIsListed] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);
 
   const modelRef = useRef(null);
 
@@ -52,7 +56,6 @@ export default function Home() {
     }
   }, []);
 
-  // FIXED: Use useEffect instead of useState
   useEffect(() => {
     loadModel();
   }, [loadModel]);
@@ -85,7 +88,6 @@ export default function Home() {
     });
   }, []);
 
-  // FIXED: Return the classification result instead of just boolean
   const classifyImage = useCallback(async (file) => {
     if (!modelRef.current) {
       const errorResult = { error: "Model not loaded", isFan: false };
@@ -97,26 +99,16 @@ export default function Home() {
       const img = new Image();
       img.onload = async () => {
         try {
-          // Preprocess the image
           const preprocessed = preprocessImage(img);
-          
-          // Make prediction
           const predictions = await modelRef.current.predict(preprocessed).data();
           
-          // Get top prediction
           const topPredictionIndex = Array.from(predictions)
             .map((p, i) => ({ probability: p, index: i }))
             .sort((a, b) => b.probability - a.probability)[0];
 
-          console.log('Top prediction:', topPredictionIndex);
-
           const confidence = topPredictionIndex.probability;
-          
-          // Check if it's a fan (ImageNet class 545)
           const fanClassIndices = [545];
           const isFan = fanClassIndices.includes(topPredictionIndex.index) && confidence > 0.3;
-          
-          console.log(`Is fan: ${isFan} (class index: ${topPredictionIndex.index}, confidence: ${confidence})`);
           
           const result = {
             isFan,
@@ -127,11 +119,8 @@ export default function Home() {
           
           setClassificationResult(result);
           setIsValidFan(isFan);
-          
-          // Clean up tensors
           preprocessed.dispose();
-          
-          resolve(result); // Return the full result
+          resolve(result);
         } catch (error) {
           console.error('Classification error:', error);
           const errorResult = { error: error.message, isFan: false };
@@ -143,9 +132,7 @@ export default function Home() {
     });
   }, [preprocessImage]);
 
-  // FIXED: Add validation for file parameter
   const setFile = useCallback(async (file) => {
-    // Handle file removal case
     if (!file) {
       setSelectedFile(null);
       setPreviewUrl(null);
@@ -155,7 +142,6 @@ export default function Home() {
       return;
     }
 
-    // Validate that it's actually a File object
     if (!(file instanceof File) && !(file instanceof Blob)) {
       console.error('Invalid file object:', file);
       setStatus("Invalid file. Please select a valid image file.");
@@ -169,7 +155,6 @@ export default function Home() {
       setIsValidFan(false);
       setClassificationResult(null);
       
-      // Clean up previous preview URL to prevent memory leaks
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
@@ -178,18 +163,15 @@ export default function Home() {
       setPreviewUrl(url);
 
       if (modelLoaded) {
-        console.log("Classifying image...");
         const result = await classifyImage(file);
         
-        // Use the returned result instead of state
         if (result.isFan && !result.error) {
           setSelectedFile(file);
-          setStatus("✅ Fan detected! Let's cool it up|");
+          setStatus("✅ Fan detected! Let's cool it up");
         } else {
           setStatus("❌ Bro that's not a fan! You can't get past the fan police🚔");
         }
       } else {
-        // If model isn't loaded, allow upload but warn
         setSelectedFile(file);
         setStatus("⚠️ AI validation unavailable. Proceeding without verification.");
         setIsValidFan(true);
@@ -226,7 +208,16 @@ export default function Home() {
     if (!res.ok) throw new Error(data.error || "Upload failed");
 
     console.log("✅ Uploaded:", data.url);
-    return data.url; // IPFS metadata URL
+    
+    // --- 3. MODIFICATION: Return both URI and a mock public Image URL (update your API to return the real one)
+    const metadataUri = data.url;
+    // Assuming your API returns the direct, public image URL as 'imageUrl'
+    // FALLBACK: If your API only returns the metadata URI, you need to parse it 
+    // to get the actual image link from the metadata file and ensure it's a direct link.
+    const directImageUrl = data.imageUrl || "https://solana-only-fans.vercel.app/og-fallback-image.png"; // Use a fallback or parse the URI
+    
+    return { uri: metadataUri, imageUrl: directImageUrl };
+    // --- END MODIFICATION ---
   }, [selectedFile, name, description]);
 
   const handleMint = useCallback(async () => {
@@ -242,7 +233,11 @@ export default function Home() {
     try {
       setBusy(true);
       setStatus("Uploading to IPFS...");
-      const uri = await uploadToIPFS();
+      
+      // --- 4. MODIFICATION: Capture the image URL
+      const { uri, imageUrl } = await uploadToIPFS();
+      setImageUrlForOG(imageUrl); // Set the URL for the OG tags
+      // --- END MODIFICATION ---
 
       setStatus("Minting on Solana...");
       const umi = createUmi(connection)
@@ -284,17 +279,11 @@ export default function Home() {
         const mintPublicKey = new PublicKey(mintAddress);
         const priceInLamports = new anchor.BN(parseFloat(price) * 1_000_000_000);
 
-        // Generate a new keypair for the listing account (it must be a signer)
-        const listingKeypair = anchor.web3.Keypair.generate();
-
-        // Derive the PDA for the escrow token account using the correct seeds from IDL
-        // Seeds: ["escrow", mint] according to your contract
         const [escrowTokenAccount] = PublicKey.findProgramAddressSync(
             [Buffer.from("escrow"), mintPublicKey.toBuffer()],
             program.programId
         );
 
-        // Find the seller's token account for the NFT
         const sellerTokenAccount = getAssociatedTokenAddressSync(
             mintPublicKey,
             wallet.publicKey
@@ -306,7 +295,6 @@ export default function Home() {
 
         setStatus("Sending transaction...");
 
-        // Use the existing program but ensure wallet is signing
         const tx = program.methods
             .listNft(priceInLamports)
             .accounts({
@@ -324,10 +312,12 @@ export default function Home() {
                 skipPreflight: false,
                 commitment: 'confirmed'
             });
+        
         console.log("Transaction signature:", signature);
         setStatus("✅ NFT Listed Successfully!");
+        setIsListed(true);
+        setShowShareOptions(true);
         alert("Your NFT has been listed for sale!");
-        console.log("Listing created with address:", listingKeypair.publicKey.toString());
 
     } catch (e) {
         console.error("Error listing NFT:", e);
@@ -338,233 +328,331 @@ export default function Home() {
     }
 }, [program, wallet, mintAddress, price, connection]);
 
+  // X (Twitter) sharing functions
+  const generateShareText = useCallback(() => {
+    const baseText = `Just minted and listed my ${name} NFT on SolanaOnlyFans! 🪭✨\n\n`;
+    const priceText = isListed ? `💰 Price: ${price} SOL\n` : '';
+    const aiText = isValidFan ? '🤖 AI-Verified Electric Fan\n' : '';
+    const hashtags = '#SolanaOnlyFans $SOF #Fan #CryptoArt #Web3';
+    const websiteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com';
+    
+    return `${baseText}${priceText}${aiText}\n${hashtags}\n\nCheck it out: ${websiteUrl}`;
+  }, [name, price, isListed, isValidFan]);
+
+  const shareToX = useCallback(() => {
+    const text = generateShareText();
+    const encodedText = encodeURIComponent(text);
+    const websiteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com';
+    const encodedUrl = encodeURIComponent(websiteUrl);
+    
+    // --- 6. MODIFICATION: Include the `url` parameter for X to crawl the page
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+    // --- END MODIFICATION ---
+    
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+  }, [generateShareText]);
+
+
   return (
-    <div className="container">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* Animated OnlyFans Logo */}
-          <div style={{ width: "60px", height: "40px" }}>
-            <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
-              <defs>
-                <linearGradient id="fanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor:"#9945FF", stopOpacity:1}} />
-                  <stop offset="50%" style={{stopColor:"#14F195", stopOpacity:1}} />
-                  <stop offset="100%" style={{stopColor:"#9945FF", stopOpacity:1}} />
-                </linearGradient>
-                
-                <linearGradient id="solanaGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" style={{stopColor:"#9945FF", stopOpacity:1}} />
-                  <stop offset="100%" style={{stopColor:"#14F195", stopOpacity:1}} />
-                </linearGradient>
-                
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                  <feMerge> 
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              
-              <circle cx="150" cy="80" r="45" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" opacity="0.8"/>
-              
-              <g filter="url(#glow)">
-                <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transformOrigin="150 80">
-                  <animateTransform attributeName="transform" attributeType="XML"
-                                    type="rotate" from="0 150 80" to="360 150 80"
-                                    dur="1.5s" repeatCount="indefinite"/>
-                </ellipse>
-                
-                <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transform="rotate(120 150 80)" transformOrigin="150 80">
-                  <animateTransform attributeName="transform" attributeType="XML"
-                                    type="rotate" from="120 150 80" to="480 150 80"
-                                    dur="1.5s" repeatCount="indefinite"/>
-                </ellipse>
-                
-                <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transform="rotate(240 150 80)" transformOrigin="150 80">
-                  <animateTransform attributeName="transform" attributeType="XML"
-                                    type="rotate" from="240 150 80" to="600 150 80"
-                                    dur="1.5s" repeatCount="indefinite"/>
-                </ellipse>
-              </g>
-              
-              <circle cx="150" cy="80" r="8" fill="#1e293b"/>
-              <circle cx="150" cy="80" r="4" fill="url(#solanaGradient)"/>
-              
-              <rect x="147" y="115" width="6" height="25" fill="#475569" rx="3"/>
-              <ellipse cx="150" cy="145" rx="20" ry="5" fill="#64748b"/>
-              
-              <text x="150" y="170" fontFamily="Arial, sans-serif" fontSize="28" fontWeight="bold" 
-                    textAnchor="middle" fill="url(#solanaGradient)">
-                OnlyFans
-              </text>
-              
-              <text x="150" y="190" fontFamily="Arial, sans-serif" fontSize="10" 
-                    textAnchor="middle" fill="#64748b" fontStyle="italic">
-                Premium Electric Fan NFTs
-              </text>
-              
-              <g opacity="0.4">
-                <path d="M 200 60 Q 220 65 240 60" stroke="#14F195" strokeWidth="2" fill="none" strokeLinecap="round">
-                  <animate attributeName="opacity" values="0.4;0.8;0.4" dur="1.5s" repeatCount="indefinite"/>
-                </path>
-                <path d="M 205 75 Q 230 78 250 75" stroke="#14F195" strokeWidth="1.5" fill="none" strokeLinecap="round">
-                  <animate attributeName="opacity" values="0.3;0.7;0.3" dur="1.7s" repeatCount="indefinite"/>
-                </path>
-              </g>
-              
-              <rect x="10" y="10" width="30" height="15" rx="7" fill="#1e293b" opacity="0.9"/>
-              <text x="25" y="21" fontFamily="Arial, sans-serif" fontSize="8" fontWeight="bold" 
-                    textAnchor="middle" fill="#14F195">NFT</text>
-            </svg>
-          </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: "28px", background: "linear-gradient(45deg, #9945FF, #14F195)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              OnlyFans
-            </h1>
-            <p style={{ margin: 0, fontSize: "12px", color: "#64748b", fontStyle: "italic" }}>
-              AI-Verified Electric Fan Marketplace
-            </p>
-          </div>
-        </div>
-        <WalletMultiButton />
-      </div>
-
-      <div className="card">
-        <h2>1. Upload your fan picture</h2>
-        <DropzonePreview onFileSelected={setFile} />
-        
-        {/* Show image preview */}
-        {previewUrl && (
-          <div style={{ marginTop: 16 }}>
-            <img 
-              src={previewUrl} 
-              alt="Preview" 
-              style={{ 
-                maxWidth: '300px', 
-                maxHeight: '300px', 
-                borderRadius: '8px',
-                border: '2px solid #e5e7eb'
-              }} 
-            />
-          </div>
-        )}
-        
-        {/* Show classification result */}
-        {classificationResult && (
-          <div style={{ 
-            marginTop: 16, 
-            padding: 12, 
-            borderRadius: 8,
-            backgroundColor: isValidFan ? '#f0fdf4' : '#fef2f2',
-            border: `1px solid ${isValidFan ? '#22c55e' : '#ef4444'}`
-          }}>
-            <h4 style={{ margin: '0 0 8px 0', color: isValidFan ? '#16a34a' : '#dc2626' }}>
-              AI Classification Result:
-            </h4>
-            {classificationResult.error ? (
-              <p style={{ margin: 0, color: '#dc2626' }}>
-                Error: {classificationResult.error}
-              </p>
-            ) : (
-              <>
-                <p style={{ margin: '0 0 4px 0', color: isValidFan ? '#16a34a' : '#dc2626'  }}>
-                  <strong>Classification:</strong> {classificationResult.className}
-                </p>
-              </>
-            )}
-          </div>
-        )}
-        
-        <hr />
-
-        <h2>2. Fan info</h2>
-        <div className="row">
-          <div style={{ flex: 1, minWidth: 260 }}>
-            <label>Name</label>
-            <input
-              className="input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="My NFT"
-            />
-          </div>
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <label>Description</label>
-          <textarea
-            className="textarea"
-            rows={4}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe your NFT..."
-          />
-        </div>
-
-        <hr />
-
-        <h2>3. Generate your fan</h2>
-        <button 
-          className="button" 
-          disabled={busy || !selectedFile} 
-          onClick={handleMint}
-        >
-          {busy ? "Generating..." : "Generate fan"}
-        </button>
-
-        {/* Show listing section after successful mint */}
-        {showListing && mintAddress && (
+    <>
+      {/* --- 5. ADDED HEAD COMPONENT FOR DYNAMIC OG TAGS --- */}
+      <Head>
+        {/* Dynamic Open Graph tags for X sharing */}
+        {mintAddress && imageUrlForOG && (
           <>
-            <hr />
-            <h2>4. List for Sale</h2>
-            <div style={{ marginBottom: 16 }}>
-              <label>Price (SOL)</label>
-              <input
-                className="input"
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.1"
-                step="0.01"
-                min="0"
-              />
-            </div>
-            <button 
-              className="button" 
-              disabled={busy} 
-              onClick={handleListNFT}
-              style={{ backgroundColor: '#10b981' }}
-            >
-              {busy ? "Listing..." : "List NFT for Sale"}
-            </button>
-            <button 
-              className="button" 
-              onClick={() => setShowListing(false)}
-              style={{ marginLeft: 8, backgroundColor: '#6b7280' }}
-            >
-              Skip Listing
-            </button>
+            <meta property="og:title" content={`Check out my new NFT: ${name}!`} />
+            <meta property="og:description" content={`${description} | Price: ${price} SOL on SolanaOnlyFans. AI-verified!`} />
+            <meta property="og:image" content={imageUrlForOG} />
+            
+            {/* X-specific (Twitter Card) tags - summary_large_image is best for images */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={`Just minted: ${name} NFT on SolanaOnlyFans 🪭`} />
+            <meta name="twitter:description" content={`Price: ${price} SOL. ${description}`} />
+            <meta name="twitter:image" content={imageUrlForOG} />
+            {/* <meta name="twitter:site" content="@your_x_handle" /> Optional: your X handle */}
           </>
         )}
-
-        <div style={{ marginTop: 16 }}>
-          <p>Status: <span className="tag">{status || "Idle"}</span></p>
-          {mintAddress && (
+      </Head>
+      {/* -------------------------------------------------- */}
+    
+      <div className="container">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* Animated OnlyFans Logo */}
+            <div style={{ width: "60px", height: "40px" }}>
+              <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <defs>
+                  <linearGradient id="fanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor:"#9945FF", stopOpacity:1}} />
+                    <stop offset="50%" style={{stopColor:"#14F195", stopOpacity:1}} />
+                    <stop offset="100%" style={{stopColor:"#9945FF", stopOpacity:1}} />
+                  </linearGradient>
+                  
+                  <linearGradient id="solanaGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style={{stopColor:"#9945FF", stopOpacity:1}} />
+                    <stop offset="100%" style={{stopColor:"#14F195", stopOpacity:1}} />
+                  </linearGradient>
+                  
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge> 
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                
+                <circle cx="150" cy="80" r="45" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2" opacity="0.8"/>
+                
+                <g filter="url(#glow)">
+                  <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transformOrigin="150 80">
+                    <animateTransform attributeName="transform" attributeType="XML"
+                                      type="rotate" from="0 150 80" to="360 150 80"
+                                      dur="1.5s" repeatCount="indefinite"/>
+                  </ellipse>
+                  
+                  <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transform="rotate(120 150 80)" transformOrigin="150 80">
+                    <animateTransform attributeName="transform" attributeType="XML"
+                                      type="rotate" from="120 150 80" to="480 150 80"
+                                      dur="1.5s" repeatCount="indefinite"/>
+                  </ellipse>
+                  
+                  <ellipse cx="150" cy="50" rx="8" ry="25" fill="url(#fanGradient)" transform="rotate(240 150 80)" transformOrigin="150 80">
+                    <animateTransform attributeName="transform" attributeType="XML"
+                                      type="rotate" from="240 150 80" to="600 150 80"
+                                      dur="1.5s" repeatCount="indefinite"/>
+                  </ellipse>
+                </g>
+                
+                <circle cx="150" cy="80" r="8" fill="#1e293b"/>
+                <circle cx="150" cy="80" r="4" fill="url(#solanaGradient)"/>
+                
+                <rect x="147" y="115" width="6" height="25" fill="#475569" rx="3"/>
+                <ellipse cx="150" cy="145" rx="20" ry="5" fill="#64748b"/>
+                
+                <text x="150" y="170" fontFamily="Arial, sans-serif" fontSize="28" fontWeight="bold" 
+                      textAnchor="middle" fill="url(#solanaGradient)">
+                  SolanaOnlyFans
+                </text>
+                
+                <text x="150" y="190" fontFamily="Arial, sans-serif" fontSize="10" 
+                      textAnchor="middle" fill="#64748b" fontStyle="italic">
+                  Premium Electric Fan NFTs
+                </text>
+                
+                <g opacity="0.4">
+                  <path d="M 200 60 Q 220 65 240 60" stroke="#14F195" strokeWidth="2" fill="none" strokeLinecap="round">
+                    <animate attributeName="opacity" values="0.4;0.8;0.4" dur="1.5s" repeatCount="indefinite"/>
+                  </path>
+                  <path d="M 205 75 Q 230 78 250 75" stroke="#14F195" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="1.7s" repeatCount="indefinite"/>
+                  </path>
+                </g>
+                
+                <rect x="10" y="10" width="30" height="15" rx="7" fill="#1e293b" opacity="0.9"/>
+                <text x="25" y="21" fontFamily="Arial, sans-serif" fontSize="8" fontWeight="bold" 
+                      textAnchor="middle" fill="#14F195">NFT</text>
+              </svg>
+            </div>
             <div>
-              <p>Fan Address: <code>{mintAddress}</code></p>
-              {!showListing && (
-                <button 
-                  className="button" 
-                  onClick={() => setShowListing(true)}
-                  style={{ backgroundColor: '#10b981', marginTop: 8 }}
-                >
-                  List This fan for Sale
-                </button>
+              <h1 style={{ margin: 0, fontSize: "28px", background: "linear-gradient(45deg, #9945FF, #14F195)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                SolanaOnlyFans
+              </h1>
+              <p style={{ margin: 0, fontSize: "12px", color: "#64748b", fontStyle: "italic" }}>
+                AI-Verified Electric Fan Marketplace
+              </p>
+            </div>
+          </div>
+          <WalletMultiButton />
+        </div>
+
+        <div className="card">
+          <h2>1. Upload your fan picture</h2>
+          <DropzonePreview onFileSelected={setFile} />
+          
+          {/* Show image preview */}
+          {previewUrl && (
+            <div style={{ marginTop: 16 }}>
+              <img 
+                src={previewUrl} 
+                alt="Preview" 
+                style={{ 
+                  maxWidth: '300px', 
+                  maxHeight: '300px', 
+                  borderRadius: '8px',
+                  border: '2px solid #e5e7eb'
+                }} 
+              />
+            </div>
+          )}
+          
+          {/* Show classification result */}
+          {classificationResult && (
+            <div style={{ 
+              marginTop: 16, 
+              padding: 12, 
+              borderRadius: 8,
+              backgroundColor: isValidFan ? '#f0fdf4' : '#fef2f2',
+              border: `1px solid ${isValidFan ? '#22c55e' : '#ef4444'}`
+            }}>
+              <h4 style={{ margin: '0 0 8px 0', color: isValidFan ? '#16a34a' : '#dc2626' }}>
+                AI Classification Result:
+              </h4>
+              {classificationResult.error ? (
+                <p style={{ margin: 0, color: '#dc2626' }}>
+                  Error: {classificationResult.error}
+                </p>
+              ) : (
+                <>
+                  <p style={{ margin: '0 0 4px 0', color: isValidFan ? '#16a34a' : '#dc2626'  }}>
+                    <strong>Classification:</strong> {classificationResult.className}
+                  </p>
+                </>
               )}
             </div>
           )}
+          
+          <hr />
+
+          <h2>2. Fan info</h2>
+          <div className="row">
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <label>Name</label>
+              <input
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="My NFT"
+              />
+            </div>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <label>Description</label>
+            <textarea
+              className="textarea"
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe your NFT..."
+            />
+          </div>
+
+          <hr />
+
+          <h2>3. Generate your fan</h2>
+          <button 
+            className="button" 
+            disabled={busy || !selectedFile} 
+            onClick={handleMint}
+          >
+            {busy ? "Generating..." : "Generate fan"}
+          </button>
+
+          {/* Show listing section after successful mint */}
+          {showListing && mintAddress && (
+            <>
+              <hr />
+              <h2>4. List for Sale</h2>
+              <div style={{ marginBottom: 16 }}>
+                <label>Price (SOL)</label>
+                <input
+                  className="input"
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="0.1"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+              <button 
+                className="button" 
+                disabled={busy} 
+                onClick={handleListNFT}
+                style={{ backgroundColor: '#10b981' }}
+              >
+                {busy ? "Listing..." : "List NFT for Sale"}
+              </button>
+              <button 
+                className="button" 
+                onClick={() => setShowListing(false)}
+                style={{ marginLeft: 8, backgroundColor: '#6b7280' }}
+              >
+                Skip Listing
+              </button>
+            </>
+          )}
+
+          {/* Share to Social Media Section */}
+          {showShareOptions && mintAddress && (
+            <>
+              <hr />
+              <h2>5. Share Your Creation</h2>
+              <div style={{ 
+                background: 'linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%)', 
+                padding: '16px', 
+                borderRadius: '12px',
+                marginBottom: '16px'
+              }}>
+                <h3 style={{ color: 'white', margin: '0 0 12px 0', fontSize: '18px' }}>
+                  🎉 Share your new NFT with the world!
+                </h3>
+                <p style={{ color: 'white', margin: '0 0 16px 0', fontSize: '14px', opacity: 0.9 }}>
+                  Let everyone know about your awesome {name} NFT {isListed && `listed for ${price} SOL`}
+                </p>
+                
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button 
+                    className="button"
+                    onClick={shareToX}
+                    style={{ 
+                      backgroundColor: '#000000',
+                      color: 'white',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    Share on X
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          <div style={{ marginTop: 16 }}>
+            <p>Status: <span className="tag">{status || "Idle"}</span></p>
+            {mintAddress && (
+              <div>
+                <p>Fan Address: <code>{mintAddress}</code></p>
+                {!showListing && !isListed && (
+                  <button 
+                    className="button" 
+                    onClick={() => setShowListing(true)}
+                    style={{ backgroundColor: '#10b981', marginTop: 8 }}
+                  >
+                    List This fan for Sale
+                  </button>
+                )}
+                {mintAddress && !showShareOptions && (
+                  <button 
+                    className="button" 
+                    onClick={() => setShowShareOptions(true)}
+                    style={{ backgroundColor: '#1da1f2', marginTop: 8, marginLeft: 8 }}
+                  >
+                    Share This NFT
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

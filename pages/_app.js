@@ -24,7 +24,7 @@ function AppContent({ Component, pageProps }) {
   return (
     <>
     <Head>
-        <title>OnlyFans</title>
+        <title>SolanaOnlyFans</title>
         <link rel="icon" href="/onlyfans-logo.svg" />
       </Head>
     <ConnectionProvider endpoint={endpoint}>

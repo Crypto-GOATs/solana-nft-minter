@@ -303,7 +303,7 @@ export default function Marketplace() {
       return <p style={{ color: 'red' }}>Program error: {programError}</p>;
     }
     if (!program) {
-      return <p>Loading OnlyFans marketplace...</p>;
+      return <p>Loading SolanaOnlyFans marketplace...</p>;
     }
     if (!connected) {
       return (
@@ -456,7 +456,7 @@ export default function Marketplace() {
               {/* Logo text */}
               <text x="150" y="170" fontFamily="Arial, sans-serif" fontSize="28" fontWeight="bold" 
                     textAnchor="middle" fill="url(#solanaGradient)">
-                OnlyFans
+                SolanaOnlyFans
               </text>
               
               <text x="150" y="190" fontFamily="Arial, sans-serif" fontSize="10" 
@@ -612,7 +612,7 @@ export default function Marketplace() {
           margin: 0,
           fontWeight: '500'
         }}>
-          OnlyFans - Where Every Fan Finds Their Perfect Match™
+          SolanaOnlyFans - Where Every Fan Finds Their Perfect Match™
         </p>
       </div>
     </div>
