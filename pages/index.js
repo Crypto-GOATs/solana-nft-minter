@@ -342,8 +342,6 @@ export default function Home() {
   const shareToX = useCallback(() => {
     const text = generateShareText();
     const encodedText = encodeURIComponent(text);
-    const websiteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com';
-    const encodedUrl = encodeURIComponent(websiteUrl);
     
     // --- 6. MODIFICATION: Include the `url` parameter for X to crawl the page
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
