@@ -43,13 +43,12 @@ export async function POST(request) {
       );
     }
 
-    // Load agent's wallet (who owns the NFT)
-    if (!process.env.MINT_AUTHORITY_PRIVATE_KEY) {
-      throw new Error('MINT_AUTHORITY_PRIVATE_KEY not configured');
+    if (!process.env.AGENT_WALLET_PRIVATE_KEY) {
+      throw new Error('AGENT_WALLET_PRIVATE_KEY not configured');
     }
 
     const agentKeypair = Keypair.fromSecretKey(
-      bs58.decode(process.env.MINT_AUTHORITY_PRIVATE_KEY)
+      Buffer.from(process.env.AGENT_WALLET_PRIVATE_KEY, 'base64')
     );
 
     // Initialize connection and provider with proper wallet

@@ -1,15 +1,50 @@
+// At the top, update imports:
 import { NextResponse } from 'next/server';
 import SolanaX402Handler from '../../../../../lib/x402-handler';
-import { Connection, PublicKey, Keypair } from '@solana/web3.js';
+import { 
+  Connection, 
+  PublicKey, 
+  Keypair,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY 
+} from '@solana/web3.js';
 import * as anchor from '@coral-xyz/anchor';
-import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
-import { base64 } from '@metaplex-foundation/umi/serializers';
+import { 
+  getAssociatedTokenAddressSync, 
+  createAssociatedTokenAccountInstruction,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID 
+} from '@solana/spl-token';
+import idlJson from '../../../../../target/idl/solana_marketplace.json' assert { type: 'json' };
 
 // Your Anchor program ID (update this to match your deployed program)
 const PROGRAM_ID = new PublicKey('5Hixra6LUDzgLfE3C3S11H4h3f2Psnq6LkcxuEaKP8sb');
 
+// Create a proper wallet implementation for Node.js
+class NodeWallet {
+  constructor(payer) {
+    this.payer = payer;
+  }
+
+  async signTransaction(tx) {
+    tx.partialSign(this.payer);
+    return tx;
+  }
+
+  async signAllTransactions(txs) {
+    return txs.map((tx) => {
+      tx.partialSign(this.payer);
+      return tx;
+    });
+  }
+
+  get publicKey() {
+    return this.payer.publicKey;
+  }
+}
+
 export async function POST(request, { params }) {
-  const { nftMint } = params;
+  const { nftMint } = await params;
 
   const x402 = new SolanaX402Handler({
     network: process.env.SOLANA_NETWORK || 'solana-devnet',
@@ -39,7 +74,8 @@ export async function POST(request, { params }) {
     const agentKeyBytes = Buffer.from(process.env.AGENT_WALLET_PRIVATE_KEY, 'base64');
     const agentKeypair = Keypair.fromSecretKey(agentKeyBytes);
     
-    const wallet = new anchor.Wallet(agentKeypair);
+    // Use NodeWallet instead of anchor.Wallet
+    const wallet = new NodeWallet(agentKeypair);
     const provider = new anchor.AnchorProvider(
       connection,
       wallet,
@@ -57,24 +93,42 @@ export async function POST(request, { params }) {
     // Fetch listing account
     const listingAccountInfo = await connection.getAccountInfo(listingPDA);
     
-    if (!listingAccountInfo) {
-      return NextResponse.json(
-        { error: 'NFT not found or not listed for sale' },
-        { status: 404 }
-      );
-    }
+    // After checking listingAccountInfo exists:
+if (!listingAccountInfo) {
+  return NextResponse.json(
+    { error: 'NFT not found or not listed for sale' },
+    { status: 404 }
+  );
+}
+    // Fetch and decode the listing properly using the program
+    const program = new anchor.Program(
+  idlJson, 
+  provider
+);
 
-    // Decode listing account (simplified - adjust based on your actual account structure)
-    // You'll need to properly deserialize based on your Anchor IDL
-    // For now, assuming price is stored as u64 (8 bytes) at offset 8
-    const data = listingAccountInfo.data;
-    const priceBuffer = data.slice(8, 16); // Adjust offsets based on your struct
-    const price = new anchor.BN(priceBuffer, 'le');
-    const priceInSol = price.toNumber() / 1_000_000_000;
+    // Fetch and decode the listing properly using the program
+    const listing = await program.account.listing.fetch(listingPDA);
+    const priceInSol = Number(listing.price.toString()) / 1_000_000_000;
+    const sellerPublicKey = listing.seller;
+
 
     // Extract payment from headers
     const headers = Object.fromEntries(request.headers.entries());
-    const paymentHeader = x402.extractPayment(headers);
+let paymentHeader = x402.extractPayment(headers);
+
+// Parse the payment if it's a string
+if (paymentHeader && typeof paymentHeader === 'string') {
+  try {
+    paymentHeader = JSON.parse(paymentHeader);
+    console.log('[x402-buy] Parsed payment header:', paymentHeader);
+  } catch (e) {
+    console.error('[x402-buy] Failed to parse payment header:', e);
+    return NextResponse.json(
+      { error: 'Invalid payment format' },
+      { status: 400 }
+    );
+  }
+}
 
     // Create payment requirements (price in USDC, assuming 1 USDC = 1 SOL for simplicity)
     // Adjust conversion rate as needed
@@ -120,12 +174,7 @@ export async function POST(request, { params }) {
     }
 
     console.log('[x402-buy] Payment verified, executing purchase...');
-
-    // Execute buy transaction using your Anchor program
-    // Load the program with IDL (you'll need to provide this)
-    const idl = await anchor.Program.fetchIdl(PROGRAM_ID, provider);
-    const program = new anchor.Program(idl, PROGRAM_ID, provider);
-
+  
     const buyerPublicKey = new PublicKey(buyerWallet);
     const [escrowTokenAccount] = PublicKey.findProgramAddressSync(
       [Buffer.from("escrow"), mintPublicKey.toBuffer()],
@@ -153,28 +202,26 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Get seller from listing account (you'll need to properly decode this)
-    const sellerPublicKey = new PublicKey(data.slice(40, 72)); // Adjust offset based on your struct
-
     const feeRecipient = new PublicKey(process.env.FEE_RECIPIENT || "5GrJ4aUiQRc1frnxyv89ws27wPu2fxsgJvxHgLmEjBBq");
 
     // Execute buy transaction
-    let txBuilder = program.methods
-      .buyNft()
-      .accounts({
-        listing: listingPDA,
-        buyer: buyerPublicKey,
-        seller: sellerPublicKey,
-        escrowTokenAccount: escrowTokenAccount,
-        buyerTokenAccount: buyerTokenAccount,
-        mint: mintPublicKey,
-        feeRecipient: feeRecipient,
-        rentRecipient: sellerPublicKey,
-        tokenProgram: anchor.web3.TOKEN_PROGRAM_ID,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        associatedTokenProgram: anchor.web3.ASSOCIATED_TOKEN_PROGRAM_ID,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      });
+    // Execute buy transaction
+let txBuilder = program.methods
+  .buyNft()
+  .accounts({
+    listing: listingPDA,
+    buyer: buyerPublicKey,
+    seller: sellerPublicKey,
+    escrowTokenAccount: escrowTokenAccount,
+    buyerTokenAccount: buyerTokenAccount,
+    mint: mintPublicKey,
+    feeRecipient: feeRecipient,
+    rentRecipient: sellerPublicKey,
+    tokenProgram: TOKEN_PROGRAM_ID,  // Now imported correctly
+    systemProgram: SystemProgram.programId,
+    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,  // Now imported correctly
+    rent: SYSVAR_RENT_PUBKEY,
+  });
 
     if (preInstructions.length > 0) {
       txBuilder = txBuilder.preInstructions(preInstructions);
@@ -212,12 +259,27 @@ export async function POST(request, { params }) {
 
 // GET endpoint to retrieve listing details
 export async function GET(request, { params }) {
-  const { nftMint } = params;
+  const { nftMint } = await params; // Add await here
 
   try {
     const connection = new Connection(
       process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com'
     );
+
+    // Create provider for read-only access
+    const dummyKeypair = Keypair.generate();
+    const wallet = new NodeWallet(dummyKeypair);
+    const provider = new anchor.AnchorProvider(
+      connection,
+      wallet,
+      { commitment: 'confirmed' }
+    );
+
+    const program = new anchor.Program(
+  idlJson, 
+  PROGRAM_ID, 
+  provider
+);
 
     const mintPublicKey = new PublicKey(nftMint);
     const [listingPDA] = PublicKey.findProgramAddressSync(
@@ -225,26 +287,16 @@ export async function GET(request, { params }) {
       PROGRAM_ID
     );
 
-    const listingAccountInfo = await connection.getAccountInfo(listingPDA);
-    
-    if (!listingAccountInfo) {
-      return NextResponse.json(
-        { error: 'NFT not found or not listed' },
-        { status: 404 }
-      );
-    }
-
-    // Decode listing (adjust based on your actual structure)
-    const data = listingAccountInfo.data;
-    const priceBuffer = data.slice(8, 16);
-    const price = new anchor.BN(priceBuffer, 'le');
-    const priceInSol = price.toNumber() / 1_000_000_000;
+    // Use program to decode
+    const listing = await program.account.listing.fetch(listingPDA);
+    const priceInSol = Number(listing.price.toString()) / 1_000_000_000;
 
     return NextResponse.json({
       nftMint,
       price: priceInSol,
-      priceUsdc: priceInSol, // Simplified conversion
+      priceUsdc: priceInSol,
       listingPda: listingPDA.toString(),
+      seller: listing.seller.toString(),
       purchaseEndpoint: `/api/agent/buy/${nftMint}`,
       paymentProtocol: 'x402',
       network: process.env.SOLANA_NETWORK || 'solana-devnet',
