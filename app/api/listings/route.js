@@ -122,7 +122,7 @@ export async function GET() {
           nftMint: listing.account.mint.toString(),
           mint: listing.account.mint.toString(),
           seller: listing.account.seller.toString(),
-          price: listing.account.price.toNumber() / 1_000_000_000, // Convert lamports to SOL
+          price: Number(listing.account.price.toString()) / 1_000_000_000,
           closed: listing.account.closed,
           isActive: !listing.account.closed,
           isSold: listing.account.closed,

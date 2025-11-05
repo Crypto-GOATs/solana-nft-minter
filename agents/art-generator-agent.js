@@ -220,7 +220,7 @@ async uploadToIPFS(imageBuffer, filename, nftMetadata) {
       });
 
       this.trackSpending(mintCost, 'mint');
-      this.log(`✅ NFT minted with payment: ${result.nftMint}`);
+      this.log(`✅ NFT minted with payment: ${result.mintAddress}`);
       
       return result;
     } catch (error) {
@@ -308,6 +308,8 @@ const metadataUri = await this.uploadToIPFS(imageBuffer, imageFilename, metadata
       const suggestedPrice = await this.determinePrice(artPrompt);
       
       // Step 8: List the NFT for sale
+      this.log('Waiting 10 seconds for NFT to propagate on-chain...');
+      await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
       const listingResult = await this.listNFT(mintResult.mintAddress, suggestedPrice);
 
       this.log(`\n✅ Iteration ${iteration} completed!`);
