@@ -216,7 +216,6 @@ let txBuilder = program.methods
     buyerTokenAccount: buyerTokenAccount,
     mint: mintPublicKey,
     feeRecipient: feeRecipient,
-    rentRecipient: sellerPublicKey,
     tokenProgram: TOKEN_PROGRAM_ID,  // Now imported correctly
     systemProgram: SystemProgram.programId,
     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,  // Now imported correctly

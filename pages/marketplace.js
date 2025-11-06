@@ -275,8 +275,6 @@ export default function Marketplace() {
           buyerTokenAccount: buyerTokenAccount,
           mint: mint,
           feeRecipient: feeRecipient,
-          // Add this line to provide the rentRecipient account
-          rentRecipient: listing.account.seller,
           tokenProgram: anchor.web3.TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
           associatedTokenProgram: anchor.web3.ASSOCIATED_TOKEN_PROGRAM_ID,

@@ -100,10 +100,6 @@
           "address": "11111111111111111111111111111111"
         },
         {
-          "name": "rent_recipient",
-          "writable": true
-        },
-        {
           "name": "associated_token_program",
           "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
@@ -334,6 +330,31 @@
       "code": 6004,
       "name": "UnauthorizedSeller",
       "msg": "Only the seller can unlist this NFT"
+    },
+    {
+      "code": 6005,
+      "name": "DuplicateAccount",
+      "msg": "Account keys must be unique where required"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidFeeRecipient",
+      "msg": "Invalid fee recipient - must be the treasury wallet"
+    },
+    {
+      "code": 6007,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow or underflow"
+    },
+    {
+      "code": 6008,
+      "name": "Unauthorized",
+      "msg": "Unauthorized - signer required"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid token account"
     }
   ],
   "types": [
