@@ -259,7 +259,7 @@ export async function POST(request) {
           reason: verification.reason,
           confidence: verification.confidence,
           classIndex: verification.classIndex,
-          hint: 'Only verified electric fan NFTs can be listed on SolanaOnlyFans.',
+          hint: 'Only verified electric fan NFTs can be listed on OnlyFansSolana.',
         }, { status: 403 });
       }
 

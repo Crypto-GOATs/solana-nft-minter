@@ -39,33 +39,105 @@ class ArtGeneratorAgent extends BaseAgent {
     this.pinataSecretKey = process.env.PINATA_SECRET_API_KEY;
   }
 
+  /**
+   * SMART: Generate art prompt with feedback loop and memory
+   */
   async generateArtPrompt() {
-  // Try OpenAI first if available
-  if (process.env.OPENAI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
+      return this.generateFallbackPrompt();
+    }
+
     try {
-      this.log('Generating art prompt with AI...');
-      const prompt = `Generate a creative and unique prompt for an electric fan NFT artwork. ONE sentence only:`;
-      const artPrompt = await this.makeDecision(prompt);
-      this.log(`Generated prompt: ${artPrompt}`);
-      return artPrompt.trim();
+      this.log('🧠 Generating smart art prompt with feedback loop...');
+
+      // Get memory context from past successes
+      const memoryContext = this.getMemoryContext();
+
+      // Step 1: Generate multiple candidate prompts
+      const candidatePrompts = await this.generateCandidatePrompts(memoryContext);
+
+      // Step 2: Evaluate and select best prompt
+      const bestPrompt = await this.evaluateAndSelectBest(candidatePrompts);
+
+      this.log(`✅ Selected prompt: ${bestPrompt}`);
+      return bestPrompt.trim();
     } catch (error) {
-      this.log('⚠️  AI prompt failed, using random prompt', 'WARN');
+      this.log('⚠️  Smart prompt generation failed, using fallback', 'WARN');
+      return this.generateFallbackPrompt();
     }
   }
 
-  // Fallback to random prompts
-  const prompts = [
-    "A vintage brass desk fan from the 1920s with ornate Art Deco engravings",
-    "A holographic cyberpunk cooling device with neon blue LED blades",
-    "An ancient Japanese uchiwa fan painted with cherry blossoms",
-    "A steampunk industrial fan with exposed brass gears",
-    "A retro-futuristic atomic age fan with chrome finish"
-  ];
+  async generateCandidatePrompts(memoryContext) {
+    const basePrompt = `${memoryContext}
+Generate 3 creative and unique prompts for electric fan NFT artworks.
 
-  const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-  this.log(`Using prompt: ${randomPrompt}`);
-  return randomPrompt;
-}
+Consider:
+- Unique artistic styles (Art Deco, cyberpunk, steampunk, minimalist, baroque, etc.)
+- Unusual materials or concepts
+- What has worked well in the past (from memory above)
+- Collector appeal and uniqueness
+
+Format: Return ONLY 3 prompts, one per line, numbered 1-3.`;
+
+    const response = await this.makeDecision(basePrompt, { maxTokens: 300 });
+
+    // Parse the 3 prompts
+    const prompts = response
+      .split('\n')
+      .filter(line => line.trim().match(/^[123][\.\)]/))
+      .map(line => line.replace(/^[123][\.\)]\s*/, '').trim())
+      .filter(p => p.length > 10);
+
+    return prompts.length >= 2 ? prompts : [
+      response.split('\n')[0],
+      "A holographic cyberpunk cooling device with neon blue LED blades",
+      "A vintage brass desk fan from the 1920s with ornate Art Deco engravings"
+    ];
+  }
+
+  async evaluateAndSelectBest(prompts) {
+    this.log(`Evaluating ${prompts.length} candidate prompts...`);
+
+    const evaluationPrompt = `Rate these NFT art prompts for marketability and uniqueness (1-10 scale):
+
+${prompts.map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+Consider:
+- Uniqueness and creativity
+- Appeal to collectors
+- Visual potential
+- Market demand for electric fan NFTs
+
+Respond with ONLY the number (1-${prompts.length}) of the best prompt and a brief reason.
+Format: "[number] - [reason]"`;
+
+    const evaluation = await this.makeDecision(evaluationPrompt);
+
+    // Extract the selected number
+    const match = evaluation.match(/^(\d+)/);
+    const selectedIndex = match ? parseInt(match[1]) - 1 : 0;
+
+    const validIndex = Math.max(0, Math.min(selectedIndex, prompts.length - 1));
+    const selectedPrompt = prompts[validIndex];
+
+    this.log(`Selected option ${validIndex + 1}: ${evaluation}`);
+
+    return selectedPrompt;
+  }
+
+  generateFallbackPrompt() {
+    const prompts = [
+      "A vintage brass desk fan from the 1920s with ornate Art Deco engravings",
+      "A holographic cyberpunk cooling device with neon blue LED blades",
+      "An ancient Japanese uchiwa fan painted with cherry blossoms",
+      "A steampunk industrial fan with exposed brass gears",
+      "A retro-futuristic atomic age fan with chrome finish"
+    ];
+
+    const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+    this.log(`Using fallback prompt: ${randomPrompt}`);
+    return randomPrompt;
+  }
 
   /**
    * Generate an AI image using OpenAI's DALL-E
@@ -249,21 +321,50 @@ async uploadToIPFS(imageBuffer, filename, nftMetadata) {
     }
   }
 
+  /**
+   * SMART: Determine price using multi-step reasoning
+   */
   async determinePrice(artPrompt) {
-    const prompt = `As an NFT pricing expert, determine a fair price in SOL for this NFT:
-"${artPrompt}"
+    this.log('🧠 Using smart pricing analysis...');
 
-Consider:
-- It's an AI-generated electric fan NFT
-- Target collectors are fan enthusiasts
-- Price should be between 0.5 and 5 SOL
+    try {
+      // Multi-step pricing reasoning
+      const reasoningSteps = [
+        {
+          name: 'Rarity Assessment',
+          prompt: `Analyze the rarity/uniqueness of this NFT concept: "${artPrompt}". Rate 1-10 and explain briefly.`
+        },
+        {
+          name: 'Market Positioning',
+          prompt: `For this NFT: "${artPrompt}". What market segment does it appeal to? (mass market/mid-tier/premium)`
+        },
+        {
+          name: 'Price Recommendation',
+          prompt: `Based on the rarity and market positioning, suggest a price between 0.5-5 SOL. Consider electric fan NFT market. Reply with ONLY the number.`
+        }
+      ];
 
-Respond with ONLY a number (the price in SOL), nothing else.`;
+      const reasoning = await this.reasonInSteps(reasoningSteps);
 
+      // Extract price from final step
+      const priceResult = reasoning[2].result;
+      const price = parseFloat(priceResult.match(/[\d.]+/)?.[0] || '2.0');
+      const finalPrice = Math.max(0.5, Math.min(5, price));
+
+      this.log(`Smart pricing: ${finalPrice} SOL`);
+      this.log(`  - ${reasoning[0].result.substring(0, 50)}...`);
+
+      return finalPrice;
+    } catch (error) {
+      this.log('⚠️ Smart pricing failed, using simple method', 'WARN');
+      return this.determineSimplePrice(artPrompt);
+    }
+  }
+
+  async determineSimplePrice(artPrompt) {
+    const prompt = `Price this NFT in SOL (0.5-5): "${artPrompt}". Reply with ONLY a number.`;
     const priceStr = await this.makeDecision(prompt);
     const price = parseFloat(priceStr.match(/[\d.]+/)?.[0] || '2.0');
-    
-    this.log(`AI suggested price: ${price} SOL`);
     return Math.max(0.5, Math.min(5, price));
   }
 
@@ -317,6 +418,13 @@ this.log(`   NFT: ${metadata.name}`);
 this.log(`   Mint: ${mintResult.mintAddress}`);
 this.log(`   Metadata URI: ${metadataUri}`);
 
+      // Learn from success
+      this.learnFromAction(`Created NFT: ${metadata.name}`, 'success', {
+        reason: `Minted with prompt: ${artPrompt.substring(0, 80)}`,
+        price: suggestedPrice,
+        prompt: artPrompt
+      });
+
       return {
         success: true,
         mintAddress: mintResult.mintAddress,
@@ -329,6 +437,13 @@ this.log(`   Metadata URI: ${metadataUri}`);
 
     } catch (error) {
       this.log(`❌ Iteration ${iteration} failed: ${error.message}`, 'ERROR');
+
+      // Learn from failure
+      this.learnFromAction(`Attempted NFT creation`, 'failure', {
+        reason: error.message,
+        iteration
+      });
+
       return {
         success: false,
         error: error.message,

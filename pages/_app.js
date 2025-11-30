@@ -13,7 +13,7 @@ import { Scroll, X } from 'lucide-react';
 
 // --- START: Terms of Service Content ---
 const TERMS_OF_SERVICE_MD = `
-# TERMS OF SERVICE: SolanaOnlyFans DEVNET MARKETPLACE
+# TERMS OF SERVICE: OnlyFansSolana DEVNET MARKETPLACE
 
 **Last Updated:** September 27, 2025
 
@@ -24,7 +24,7 @@ THIS PLATFORM OPERATES EXCLUSIVELY ON THE SOLANA DEVELOPMENT NETWORK (DEVNET). A
 
 ## 1. Acceptance of Terms
 
-By using the services provided by SolanaOnlyFans (referred to as "We," "Us," or "Our") through the SolanaOnlyFans Devnet Marketplace ("the Service"), you agree to be bound by these Terms of Service (the "Terms"). If you do not agree to these Terms, do not use the Service.
+By using the services provided by OnlyFansSolana (referred to as "We," "Us," or "Our") through the OnlyFansSolana Devnet Marketplace ("the Service"), you agree to be bound by these Terms of Service (the "Terms"). If you do not agree to these Terms, do not use the Service.
 
 **The primary purpose of the Service is to facilitate testing, development, and debugging of decentralized applications. It is not intended for commercial use.**
 
@@ -76,7 +76,7 @@ By creating or trading User Content, you represent and warrant that:
 
 ### 4.3. Indemnification for IP Infringement
 
-You agree to indemnify, defend, and hold harmless [Company Name/Entity] from and against all claims, liabilities, damages, and expenses (including legal fees) arising from any breach of your IP representations in this Section 4, regardless of the Devnet status.
+You agree to indemnify, defend, and hold harmless OnlyFansSolana from and against all claims, liabilities, damages, and expenses (including legal fees) arising from any breach of your IP representations in this Section 4, regardless of the Devnet status.
 
 ## 5. Smart Contract and Blockchain Risks
 
@@ -90,11 +90,11 @@ You accept the inherent risks associated with the Solana Devnet, including, but 
 
 ## 6. Limitation of Liability
 
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL [Company Name/Entity] OR ITS AFFILIATES BE LIABLE FOR ANY CONSEQUENTIAL, INCIDENTAL, INDIRECT, SPECIAL, PUNITIVE, OR OTHER DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF TEST DATA, LOSS OF TEST TOKENS, OR ANY OTHER PECUNIARY LOSS) ARISING OUT OF OR IN ANY WAY RELATED TO YOUR USE OF THE SERVICE, WHETHER BASED ON CONTRACT, TORT, NEGLIGENCE, STRICT LIABILITY OR OTHERWISE, EVEN IF WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL OnlyFansSolana OR ITS AFFILIATES BE LIABLE FOR ANY CONSEQUENTIAL, INCIDENTAL, INDIRECT, SPECIAL, PUNITIVE, OR OTHER DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF TEST DATA, LOSS OF TEST TOKENS, OR ANY OTHER PECUNIARY LOSS) ARISING OUT OF OR IN ANY WAY RELATED TO YOUR USE OF THE SERVICE, WHETHER BASED ON CONTRACT, TORT, NEGLIGENCE, STRICT LIABILITY OR OTHERWISE, EVEN IF WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
 ## 7. Governing Law
 
-These Terms shall be governed by the laws of [Your Jurisdiction, e.g., the State of Delaware] without regard to its conflict of law principles.
+These Terms shall be governed by the laws of Switzerland without regard to its conflict of law principles.
 
 ## 8. Modifications to Terms
 
@@ -197,7 +197,7 @@ function AppContent({ Component, pageProps }) {
   return (
     <>
     <Head>
-        <title>SolanaOnlyFans</title>
+        <title>OnlyFansSolana</title>
         <link rel="icon" href="/onlyfans-logo.svg" />
       </Head>
     <ConnectionProvider endpoint={endpoint}>
@@ -222,13 +222,14 @@ function AppContent({ Component, pageProps }) {
                 <button className="button">Litepaper</button>
               </Link>
               {/* TOS Button added to the navigation */}
-              <button 
-                onClick={() => setShowTOS(true)} 
-                className="button bg-pink-600 hover:bg-pink-700 text-white flex items-center gap-1"
-                aria-label="View Terms of Service"
-              >
-                Terms of Service
-              </button>
+              <Link href="/terms-of-service">
+                <button
+                  className="button bg-pink-600 hover:bg-pink-700 text-white flex items-center gap-1"
+                  aria-label="View Terms of Service"
+                >
+                  Terms of Service
+                </button>
+              </Link>
             </div>
             <div>
             </div>

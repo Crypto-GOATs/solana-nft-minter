@@ -330,10 +330,10 @@ export default function Home() {
 
   // X (Twitter) sharing functions
   const generateShareText = useCallback(() => {
-    const baseText = `Just minted and listed my ${name} NFT on SolanaOnlyFans! 🪭✨\n\n`;
+    const baseText = `Just minted and listed my ${name} NFT on OnlyFansSolana! 🪭✨\n\n`;
     const priceText = isListed ? `💰 Price: ${price} SOL\n` : '';
     const aiText = isValidFan ? '🤖 AI-Verified Electric Fan\n' : '';
-    const hashtags = '#SolanaOnlyFans $SOF #Fan #CryptoArt #Web3';
+    const hashtags = '#OnlyFansSolana $SOF #Fan #CryptoArt #Web3';
     const websiteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com';
     
     return `${baseText}${priceText}${aiText}\n${hashtags}\n\nCheck it out: ${websiteUrl}`;
@@ -359,12 +359,12 @@ export default function Home() {
         {mintAddress && imageUrlForOG && (
           <>
             <meta property="og:title" content={`Check out my new NFT: ${name}!`} />
-            <meta property="og:description" content={`${description} | Price: ${price} SOL on SolanaOnlyFans. AI-verified!`} />
+            <meta property="og:description" content={`${description} | Price: ${price} SOL on OnlyFansSolana. AI-verified!`} />
             <meta property="og:image" content={imageUrlForOG} />
             
             {/* X-specific (Twitter Card) tags - summary_large_image is best for images */}
             <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content={`Just minted: ${name} NFT on SolanaOnlyFans 🪭`} />
+            <meta name="twitter:title" content={`Just minted: ${name} NFT on OnlyFansSolana 🪭`} />
             <meta name="twitter:description" content={`Price: ${price} SOL. ${description}`} />
             <meta name="twitter:image" content={imageUrlForOG} />
             {/* <meta name="twitter:site" content="@your_x_handle" /> Optional: your X handle */}
@@ -430,7 +430,7 @@ export default function Home() {
                 
                 <text x="150" y="170" fontFamily="Arial, sans-serif" fontSize="28" fontWeight="bold" 
                       textAnchor="middle" fill="url(#solanaGradient)">
-                  SolanaOnlyFans
+                  OnlyFansSolana
                 </text>
                 
                 <text x="150" y="190" fontFamily="Arial, sans-serif" fontSize="10" 
@@ -454,7 +454,7 @@ export default function Home() {
             </div>
             <div>
               <h1 style={{ margin: 0, fontSize: "28px", background: "linear-gradient(45deg, #9945FF, #14F195)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                SolanaOnlyFans
+                OnlyFansSolana
               </h1>
               <p style={{ margin: 0, fontSize: "12px", color: "#64748b", fontStyle: "italic" }}>
                 AI-Verified Electric Fan Marketplace

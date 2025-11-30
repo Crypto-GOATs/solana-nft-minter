@@ -4,7 +4,7 @@ import React from 'react';
 
 /**
  * LitepaperPage Component
- * Renders the full SolanaOnlyFans Litepaper document using custom, embedded CSS.
+ * Renders the full OnlyFansSolana Litepaper document using custom, embedded CSS.
  * This component is designed to be used as a separate page/route within the Next.js application.
  */
 const LitepaperPage = () => {
@@ -137,14 +137,14 @@ const LitepaperPage = () => {
 
             <div className="container">
                 <h1 className="doc-header">
-                    SolanaOnlyFans: The Solana Electric Fan NFT Marketplace
+                    OnlyFansSolana: The Solana Electric Fan NFT Marketplace
                 </h1>
 
                 {/* Abstract */}
                 <section>
                     <h2 className="doc-subheader" style={{ marginTop: 0 }}>Abstract</h2>
                     <p className="doc-paragraph">
-                        <strong className="highlight-purple">SolanaOnlyFans</strong> is a decentralized application (dApp) on the Solana blockchain that serves as a niche marketplace for creating, verifying, and trading <strong className="doc-strong">Electric Fan NFTs</strong>. Leveraging the high throughput and low latency of Solana, the platform offers creators a seamless way to mint unique, collectible fan artwork. The core innovation is the use of a <strong className="doc-strong">Machine Learning (ML) model</strong> to verify that uploaded imagery genuinely depicts an electric fan, ensuring content fidelity and exclusivity for collectors.
+                        <strong className="highlight-purple">OnlyFansSolana</strong> is a decentralized application (dApp) on the Solana blockchain that serves as a niche marketplace for creating, verifying, and trading <strong className="doc-strong">Electric Fan NFTs</strong>. Leveraging the high throughput and low latency of Solana, the platform offers creators a seamless way to mint unique, collectible fan artwork. The core innovation is the use of a <strong className="doc-strong">Machine Learning (ML) model</strong> to verify that uploaded imagery genuinely depicts an electric fan, ensuring content fidelity and exclusivity for collectors.
                     </p>
                 </section>
 
@@ -162,9 +162,9 @@ const LitepaperPage = () => {
 
                 {/* 2. The Solution */}
                 <section>
-                    <h2 className="doc-subheader">2. The Solution: SolanaOnlyFans (The Electric Fan Marketplace)</h2>
+                    <h2 className="doc-subheader">2. The Solution: OnlyFansSolana (The Electric Fan Marketplace)</h2>
                     <p className="doc-paragraph">
-                        <strong className="highlight-purple">SolanaOnlyFans</strong> introduces a streamlined, vertically integrated solution powered by Solana's technology and Anchor smart contracts, defined by the following core features:
+                        <strong className="highlight-purple">OnlyFansSolana</strong> introduces a streamlined, vertically integrated solution powered by Solana's technology and Anchor smart contracts, defined by the following core features:
                     </p>
 
                     <h3 className="doc-section-header">2.1. ML-Powered Verification (The Fan Police)</h3>
@@ -179,7 +179,7 @@ const LitepaperPage = () => {
 
                     <h3 className="doc-section-header">2.2. Solana Foundation</h3>
                     <p className="doc-paragraph">
-                        <strong className="highlight-purple">SolanaOnlyFans</strong> is built entirely on the Solana blockchain, offering distinct advantages:
+                        <strong className="highlight-purple">OnlyFansSolana</strong> is built entirely on the Solana blockchain, offering distinct advantages:
                     </p>
                     <ul className="doc-list">
                         <li><strong className="doc-strong">Low Cost:</strong> Minimal transaction fees allow creators to mint and list assets affordably and frequently.</li>
@@ -190,7 +190,7 @@ const LitepaperPage = () => {
 
                 {/* 3. Marketplace Mechanics */}
                 <section>
-                    <h2 className="doc-subheader">3. The SolanaOnlyFans Marketplace Mechanics</h2>
+                    <h2 className="doc-subheader">3. The OnlyFansSolana Marketplace Mechanics</h2>
                     <p className="doc-paragraph">
                         The dApp uses an **Anchor program** to manage the listing and sale of the AI-verified fan NFTs.
                     </p>
@@ -243,13 +243,53 @@ const LitepaperPage = () => {
                     </ul>
                 </section>
 
-                {/* 5. Future Roadmap */}
+                {/* 5. X402 Integration and AI Agents */}
                 <section>
-                    <h2 className="doc-subheader">5. Future Roadmap (Potential)</h2>
+                    <h2 className="doc-subheader">5. X402 Integration and Autonomous AI Agents</h2>
+
+                    <h3 className="doc-section-header">5.1. X402 Protocol Integration</h3>
+                    <p className="doc-paragraph">
+                        <strong className="highlight-purple">OnlyFansSolana</strong> is now integrated with the <strong className="doc-strong">X402 protocol</strong>, enabling advanced AI agent interactions and autonomous marketplace participation. This integration allows AI agents to seamlessly interact with the platform's smart contracts, enabling programmatic NFT listing, purchasing, and trading operations.
+                    </p>
+                    <ul className="doc-list">
+                        <li><strong className="doc-strong">Agent Authentication:</strong> Secure wallet management for AI agents through the X402 protocol.</li>
+                        <li><strong className="doc-strong">Automated Transactions:</strong> AI agents can autonomously execute marketplace transactions with proper authorization.</li>
+                        <li><strong className="doc-strong">API Integration:</strong> RESTful API endpoints enable AI agents to interact with the marketplace programmatically.</li>
+                    </ul>
+
+                    <h3 className="doc-section-header">5.2. AI Trading Agents</h3>
+                    <p className="doc-paragraph">
+                        We are actively developing <strong className="doc-strong">autonomous AI trading agents</strong> that participate in the OnlyFansSolana marketplace. These agents employ various strategies to analyze, trade, and curate electric fan NFT collections.
+                    </p>
+                    <ul className="doc-list">
+                        <li><strong className="doc-strong">Art Generator Agent:</strong> Creates and mints AI-generated electric fan artwork, leveraging the ML verification system to ensure all generated images pass the "fan police" checks.</li>
+                        <li><strong className="doc-strong">Trading Agent:</strong> Analyzes market trends, pricing patterns, and rarity metrics to make autonomous buying and selling decisions within the marketplace.</li>
+                        <li><strong className="doc-strong">Collector Agent:</strong> Curates themed collections based on specific criteria such as art style, pricing, or historical significance.</li>
+                        <li><strong className="doc-strong">Market Maker Agent:</strong> Provides liquidity by maintaining buy and sell listings at competitive prices.</li>
+                    </ul>
+
+                    <h3 className="doc-section-header">5.3. Agent Architecture</h3>
+                    <p className="doc-paragraph">
+                        Each AI agent operates with the following core components:
+                    </p>
+                    <ul className="doc-list">
+                        <li><strong className="doc-strong">Wallet Management:</strong> Secure Solana wallet with dedicated keypair for autonomous transactions.</li>
+                        <li><strong className="doc-strong">Decision Engine:</strong> Machine learning models and rule-based systems that determine trading strategies.</li>
+                        <li><strong className="doc-strong">ML Verification:</strong> Integration with the platform's MobileNet-based fan verification system to ensure compliance.</li>
+                        <li><strong className="doc-strong">Transaction Executor:</strong> Anchor-based transaction builder that interacts with the marketplace smart contracts.</li>
+                    </ul>
+                </section>
+
+                {/* 6. Future Roadmap */}
+                <section>
+                    <h2 className="doc-subheader">6. Future Roadmap</h2>
                     <ol className="doc-ordered-list">
-                        <li><strong className="doc-strong">Community Governance:</strong> Introduce a mechanism for the community to vote on new verification classes (e.g., "Vintage Fans," "Industrial Fans").</li>
-                        <li><strong className="doc-strong">AI Minting:</strong> Integrate a text-to-image AI model (e.g., Imagen or Stable Diffusion) constrained by the "electric fan" classification, allowing users to mint generative fan art.</li>
-                        <li><strong className="doc-strong">Fan Swapping:</strong> Integrate a simple swap mechanism for directly trading Fan NFTs peer-to-peer.</li>
+                        <li><strong className="doc-strong">Multi-Agent Ecosystem:</strong> Expand the AI agent framework to support third-party developers creating custom trading and curation agents.</li>
+                        <li><strong className="doc-strong">Agent Marketplace:</strong> Enable users to subscribe to or purchase AI agent strategies and services.</li>
+                        <li><strong className="doc-strong">Advanced ML Models:</strong> Integrate more sophisticated image generation and classification models, including fine-tuned Stable Diffusion models specifically trained on electric fan designs.</li>
+                        <li><strong className="doc-strong">Community Governance:</strong> Introduce a DAO mechanism for the community to vote on new verification classes (e.g., "Vintage Fans," "Industrial Fans") and agent behavior parameters.</li>
+                        <li><strong className="doc-strong">Cross-Chain Integration:</strong> Explore bridging mechanisms to enable electric fan NFT trading across multiple blockchain networks.</li>
+                        <li><strong className="doc-strong">Fan Swapping:</strong> Implement a simple swap mechanism for directly trading Fan NFTs peer-to-peer without listing fees.</li>
                     </ol>
                 </section>
             </div>

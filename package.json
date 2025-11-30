@@ -13,6 +13,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.3",
     "@coral-xyz/anchor": "0.31.1",
+    "@google/generative-ai": "^0.21.0",
     "@metaplex-foundation/digital-asset-standard-api": "*",
     "@metaplex-foundation/mpl-auction-house": "*",
     "@metaplex-foundation/mpl-token-metadata": "*",

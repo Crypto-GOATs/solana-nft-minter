@@ -63,9 +63,67 @@ class TradingAgent extends BaseAgent {
   }
 
   /**
-   * Analyze if NFT is worth buying using AI
+   * SMART: Analyze NFT using multi-step reasoning and memory
    */
   async analyzeNFT(listing) {
+    this.log(`🧠 Smart analysis for ${listing.name}...`);
+
+    try {
+      const attributesStr = listing.attributes
+        ?.map(attr => `${attr.trait_type}: ${attr.value}`)
+        .join(', ') || 'None';
+
+      // Multi-step analysis
+      const analysisSteps = [
+        {
+          name: 'Value Assessment',
+          prompt: `Evaluate this NFT's value:
+Name: ${listing.name}
+Price: ${listing.price} SOL
+Description: ${listing.description}
+Attributes: ${attributesStr}
+
+Electric fan NFTs typically range 0.5-5 SOL. Is this fairly priced, overpriced, or undervalued? Explain briefly.`
+        },
+        {
+          name: 'Resale Potential',
+          prompt: `For the NFT "${listing.name}" at ${listing.price} SOL, what's the resale potential? Consider collector appeal and uniqueness. Rate 1-10 and explain.`
+        },
+        {
+          name: 'Risk Assessment',
+          prompt: `With ${this.strategy} risk tolerance, assess the risk of buying "${listing.name}" at ${listing.price} SOL. Low/Medium/High risk? Why?`
+        }
+      ];
+
+      const reasoning = await this.reasonInSteps(analysisSteps);
+
+      // Final decision using smart decision with memory
+      const finalPrompt = `Based on this analysis:
+${reasoning.map(r => `${r.step}: ${r.result}`).join('\n')}
+
+Strategy: ${this.strategy}
+Budget remaining: ${(this.maxDailySpend - this.currentSpend).toFixed(2)} SOL
+
+Should we buy "${listing.name}" for ${listing.price} SOL?
+Respond with ONLY "yes - [reason]" or "no - [reason]" (max 15 words).`;
+
+      const decision = await this.makeSmartDecision(finalPrompt);
+      const shouldBuy = decision.toLowerCase().includes('yes');
+
+      this.log(`Decision: ${decision}`);
+
+      return {
+        shouldBuy,
+        reasoning: decision,
+        detailedAnalysis: reasoning,
+      };
+    } catch (error) {
+      this.log(`⚠️ Smart analysis failed, using simple method`, 'WARN');
+      return this.analyzeNFTSimple(listing);
+    }
+  }
+
+  async analyzeNFTSimple(listing) {
     const attributesStr = listing.attributes
       ?.map(attr => `${attr.trait_type}: ${attr.value}`)
       .join(', ') || 'None';
@@ -89,9 +147,7 @@ Format: "yes - [reason]" or "no - [reason]"`;
 
     const decision = await this.makeDecision(prompt);
     const shouldBuy = decision.toLowerCase().includes('yes');
-    
-    this.log(`Analysis for ${listing.name}: ${decision}`);
-    
+
     return {
       shouldBuy,
       reasoning: decision,
@@ -213,7 +269,7 @@ Respond with ONLY a number (the price), nothing else.`;
   }
 
   /**
-   * Run one iteration of trading
+   * SMART: Run one iteration with market analysis and learning
    */
   async runIteration(iteration) {
     this.log(`\n${'='.repeat(50)}`);
@@ -226,6 +282,13 @@ Respond with ONLY a number (the price), nothing else.`;
       if (listings.length === 0) {
         this.log('No listings available', 'WARN');
         return { success: false, reason: 'no_listings' };
+      }
+
+      // SMART: Analyze market trends first
+      if (iteration === 1 || iteration % 3 === 0) {
+        this.log('📊 Analyzing market trends...');
+        const marketAnalysis = await this.analyzeMarketTrends(listings);
+        this.log(`Market insight: ${marketAnalysis.substring(0, 100)}...`);
       }
 
       for (const listing of listings) {
@@ -248,9 +311,9 @@ Respond with ONLY a number (the price), nothing else.`;
 
         if (analysis.shouldBuy) {
           try {
-            const buyResult = await this.buyNFT(listing);
+            await this.buyNFT(listing);
             const resalePrice = await this.determineResalePrice(listing, listing.price);
-            const listResult = await this.listForResale(listing.nftMint, listing.name, resalePrice);
+            await this.listForResale(listing.nftMint, listing.name, resalePrice);
 
             const expectedProfit = resalePrice - listing.price;
             const profitPercent = ((expectedProfit / listing.price) * 100).toFixed(1);
@@ -260,6 +323,13 @@ Respond with ONLY a number (the price), nothing else.`;
             this.log(`   Purchase Price: ${listing.price} SOL`);
             this.log(`   Listed at: ${resalePrice} SOL`);
             this.log(`   Expected Profit: ${expectedProfit.toFixed(2)} SOL (${profitPercent}%)\n`);
+
+            // Learn from successful trade
+            this.learnFromAction(`Bought ${listing.name}`, 'success', {
+              reason: analysis.reasoning,
+              price: listing.price,
+              expectedProfit: expectedProfit.toFixed(2),
+            });
 
             return {
               success: true,
@@ -272,6 +342,13 @@ Respond with ONLY a number (the price), nothing else.`;
             };
           } catch (error) {
             this.log(`Failed to complete trade: ${error.message}`, 'ERROR');
+
+            // Learn from failed trade
+            this.learnFromAction(`Attempted to buy ${listing.name}`, 'failure', {
+              reason: error.message,
+              price: listing.price,
+            });
+
             continue;
           }
         } else {
@@ -293,13 +370,14 @@ Respond with ONLY a number (the price), nothing else.`;
   }
 
   /**
-   * Main agent loop
+   * SMART: Main agent loop with strategy adaptation
    */
   async run() {
     this.log(`\n🤖 ${this.name} starting...`);
     this.log(`   Wallet: ${this.walletInfo?.address || 'not configured'}`);
     this.log(`   Budget: ${this.maxDailySpend} USDC`);
     this.log(`   Strategy: ${this.strategy}`);
+    this.log(`   Adaptive Strategy: ${this.adaptiveStrategy ? 'enabled' : 'disabled'}`);
     this.log(`   Iterations: ${this.iterations}\n`);
 
     if (!this.x402 && !this.walletInfo) {
@@ -321,6 +399,12 @@ Respond with ONLY a number (the price), nothing else.`;
 
       if (result.success && result.expectedProfit) {
         totalProfit += result.expectedProfit;
+      }
+
+      // SMART: Adapt strategy every 3 iterations
+      if (i % 3 === 0 && this.adaptiveStrategy) {
+        this.log('\n🔄 Evaluating strategy adaptation...');
+        await this.adaptStrategy();
       }
 
       if (i < this.iterations) {
